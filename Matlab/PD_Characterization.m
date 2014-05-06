@@ -54,6 +54,8 @@ Du = 0;
 Dt = 0;
 Du1(1) = 0;
 Dt1(1) = 0;
+Div = 0;
+Div1 = 0;
 Time = 0;
 FullPathName = 0;
 
@@ -109,6 +111,11 @@ function runbtn_Callback(source, eventdata)
         Dt1(length(Dt1)) = [];
         Du1(length(Du1)) = [];
         
+        for i = 1:length(Du)
+            Div(i) = Du(i)/Dt(i);
+            Div1(i) = Du1(i)/Dt1(i);
+        end
+        
         %These for loops put the values into the workspace for debugging
         for i = 1:length(Time)
             assignin('base', 'Time', Time);
@@ -121,6 +128,12 @@ function runbtn_Callback(source, eventdata)
         for i = 1:length(Du1)
             assignin('base', 'Du1', Du1);
             assignin('base', 'Dt1', Dt1);
+        end
+        for i = 1:length(Div)
+            assignin('base', 'Div', Div);
+        end
+        for i = 1:length(Div1)
+            assignin('base', 'Div1', Div1);
         end
         
         %From popup function so it auto updates when run 
@@ -139,13 +152,25 @@ end
       % Set current data to the selected data set.
       switch str{val};
       case 'Delta U' % User selects Peaks.
-         scatter(Du, Du1);
+         scatter(Du, Du1, '.');
+         title('Pulse Sequence Analysis - \DeltaU Graph');
+         xlabel('\DeltaU_{n} (mV)');
+         ylabel('\DeltaU_{n+1} (mV)');
       case 'Delta T' % User selects Membrane.
-         scatter(Dt, Dt1);
+         scatter(Dt, Dt1, '.');
+         title('Pulse Sequence Analysis - \DeltaT Graph');
+         xlabel('\DeltaT_{n} (s)');
+         ylabel('\DeltaT_{n+1} (s)');
       case 'Delta U & Delta T' % User selects Sinc.
-         errordlg('Not done yet','File Error');
+         scatter(Div, Div1, '.');
+         title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
+         xlabel('\DeltaU_{n+1}/\DeltaT_{n}');
+         ylabel('\DeltaU_{n}/\DeltaT_{n} (mV)');
       case 'Voltage - Time' % User selects Peaks.
-         plot(Time, Voltage);   
+         stem(Time, Voltage, '.', 'MarkerSize',0.1); 
+         title('Filtered Data - Voltage Time Graph');
+         xlabel('Time (s)');
+         ylabel('Voltage (mV)');
       end
    end
 
