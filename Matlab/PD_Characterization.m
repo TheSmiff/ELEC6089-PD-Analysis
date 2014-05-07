@@ -3,7 +3,7 @@ function PD_Analysis
 close all;
 
 %  Create and then hide the GUI as it is being constructed.
-fig1 = figure('Visible','off','Position',[100,100,640,480], 'name',...
+fig1 = figure('Visible','off','Position',[100,100,660,485], 'name',...
     'Partial Discharge Characterization Tool - T.Smith & D.Mahmoodi',...
     'NumberTitle', 'off');
 
@@ -49,14 +49,14 @@ set(fig1,'Visible','on');
 % --- Define Global Variables
 FileName = 0;
 PathName = 0;
-Voltage = 0;
-Du = 0;
-Dt = 0;
-Du1(1) = 0;
-Dt1(1) = 0;
+U = 0;
+dU = 0;
+dT = 0;
+dUm1(1) = 0;
+dTm1(1) = 0;
 Div = 0;
 Div1 = 0;
-Time = 0;
+T = 0;
 FullPathName = 0;
 
 % --- Executes on button press in hopen.
@@ -80,54 +80,70 @@ function runbtn_Callback(source, eventdata)
         errordlg('No File Selected - select a file for analysis','File Error');
         set(hfile, 'String', 'Select a File to Proceed');
     else
+        %Zero all variables in case of repeated PSA
+        dU = 0;
+        dT = 0;
+        dUm1 = 0;
+        dTm1 = 0;
+        Div = 0;
+        Div1 = 0;
+        T = 0;
+        
         %Import the voltage file (assumed mV following discussion during
         %lecture on 06/05/2014)
-        Voltage = importdata(FullPathName);
+        U = importdata(FullPathName);
         %Evenly distribute the time - we know it is 1 second
-        Time = transpose(linspace(0,1,length(Voltage)));
+        T = transpose(linspace(0,1,length(U)));
         
         %Filter the Variables to find the PD peaks
         PD_Threshold = 1;
-        Time = Time(abs(Voltage)>PD_Threshold);
-        Voltage = Voltage(abs(Voltage)>PD_Threshold);
+        T = T(abs(U)>PD_Threshold);
+        U = U(abs(U)>PD_Threshold);
         
+        
+        %dU(n) = U(n+1) - U(n)
+        %dT(n) = T(n+1) - T(n)
         %Generate the delta variables
-        for i = 1:(length(Voltage)-1)
-            Du(i) = Voltage(i+1)-Voltage(i);
-            Dt(i) = Time(i+1)-Time(i);
+        for i = 1:(length(U)-1)
+            dU(i) = U(i+1)-U(i);
+            dT(i) = T(i+1)-T(i);
         end
         
-        %Generate the +1 variables
-        for i = 1:length(Du)
-            Du1(i+1) = Du(i);
-            Dt1(i+1) = Dt(i);
+        %dU(n-1) = U(n) - U(n-1)
+        %Generate the -1 variables
+        for i = 2:length(U) %start at 2 as U0 is not an index
+            dUm1(i) = U(i) - U(i-1);
+            dTm1(i) = T(i) - T(i-1);
         end
         
-        %Get rid of beginning and end as they are duplicated/obsolete
-        Du1(1) = [];
-        Dt1(1) = [];
-        Du(1) = [];
-        Dt(1)=[];
-        Dt1(length(Dt1)) = [];
-        Du1(length(Du1)) = [];
+        %Delete index 1 of minus ones as they are unasigned
+        dUm1(1) = [];
+        dTm1(1) = [];
+        %Also need to delete ends to make same length vectors
+        dUm1(length(dUm1)) = [];
+        dTm1(length(dTm1)) = [];
+        %Delete vector 1 of the n values to keep offset
+        dU(1) = [];
+        dT(1) = [];
         
-        for i = 1:length(Du)
-            Div(i) = Du(i)/Dt(i);
-            Div1(i) = Du1(i)/Dt1(i);
+        %Calculate the divided values
+        for i = 1:length(dU)
+            Div(i) = dU(i)/dT(i);
+            Div1(i) = dUm1(i)/dTm1(i);
         end
         
         %These for loops put the values into the workspace for debugging
-        for i = 1:length(Time)
-            assignin('base', 'Time', Time);
-            assignin('base', 'Voltage', Voltage);
+        for i = 1:length(T)
+            assignin('base', 'T', T);
+            assignin('base', 'U', U);
         end
-        for i = 1:length(Du)
-            assignin('base', 'Du', Du);
-            assignin('base', 'Dt', Dt);
+        for i = 1:length(dU)
+            assignin('base', 'dU', dU);
+            assignin('base', 'dT', dT);
         end
-        for i = 1:length(Du1)
-            assignin('base', 'Du1', Du1);
-            assignin('base', 'Dt1', Dt1);
+        for i = 1:length(dUm1)
+            assignin('base', 'dUm1', dUm1);
+            assignin('base', 'dTm1', dTm1);
         end
         for i = 1:length(Div)
             assignin('base', 'Div', Div);
@@ -152,12 +168,12 @@ end
       % Set current data to the selected data set.
       switch str{val};
       case 'Delta U' % User selects Peaks.
-         scatter(Du, Du1, '.');
+         scatter(dU, dUm1, '.');
          title('Pulse Sequence Analysis - \DeltaU Graph');
          xlabel('\DeltaU_{n} (mV)');
          ylabel('\DeltaU_{n+1} (mV)');
       case 'Delta T' % User selects Membrane.
-         scatter(Dt, Dt1, '.');
+         scatter(dT, dTm1, '.');
          title('Pulse Sequence Analysis - \DeltaT Graph');
          xlabel('\DeltaT_{n} (s)');
          ylabel('\DeltaT_{n+1} (s)');
@@ -167,11 +183,12 @@ end
          xlabel('\DeltaU_{n+1}/\DeltaT_{n}');
          ylabel('\DeltaU_{n}/\DeltaT_{n} (mV)');
       case 'Voltage - Time' % User selects Peaks.
-         stem(Time, Voltage, '.', 'MarkerSize',0.1); 
+         stem(T, U, '.', 'MarkerSize',0.1); 
          title('Filtered Data - Voltage Time Graph');
          xlabel('Time (s)');
          ylabel('Voltage (mV)');
       end
    end
+        
 
 end
