@@ -26,6 +26,11 @@ hopen = uicontrol('Style','pushbutton','String','Open File',...
 hrun  = uicontrol('Style','pushbutton','String','Run PSA',...
     'Position',[425,300,75,25],'BackgroundColor', [0.9 0.9 0.9],...
     'Callback',{@runbtn_Callback});
+
+%Run Recognition Button
+hrec  = uicontrol('Style','pushbutton','String','Run Recognition',...
+    'Position',[525,300,100,25],'BackgroundColor', [0.9 0.9 0.9],...
+    'Callback',{@recbtn_Callback});
 %File text
 hfile = uicontrol('Style','text','String','Select a File to Proceed',...
     'HorizontalAlignment', 'left',...
@@ -73,6 +78,7 @@ FullPathName = 0;
             if (isempty(strfind(FileName, '.txt')))
                 warndlg('File selected is not a supported data format','Format Warning');
             end%if
+            warndlg('Check that all 6 stock files stored in same folder as file for analysis','Check Format');
         end%ifelse
     end %function
 
@@ -115,18 +121,18 @@ function runbtn_Callback(source, eventdata)
         
         %dU(n) = U(n+1) - U(n)
         %dT(n) = T(n+1) - T(n)
-        dU = zeros(length(U),1);
-        dT = zeros(length(U),1);
         %Generate the delta variables
+        dU = zeros(length(U));
+        dT = zeros(length(U));
         for i = 1:(length(U)-1)
             dU(i) = U(i+1)-U(i);
             dT(i) = T(i+1)-T(i);
         end
         
-        dUm1 = zeros(length(U)+1,1);
-        dTm1 = zeros(length(U)+1,1);
         %dU(n-1) = U(n) - U(n-1)
         %Generate the -1 variables
+        dUm1 = zeros(length(U)+1);
+        dTm1 = zeros(length(U)+1);
         for i = 2:length(U) %start at 2 as U0 is not an index
             dUm1(i) = U(i) - U(i-1);
             dTm1(i) = T(i) - T(i-1);
@@ -142,8 +148,6 @@ function runbtn_Callback(source, eventdata)
         dU(1) = [];
         dT(1) = [];
         
-        Div = zeros(length(dU),1);
-        Div1 = zeros(length(dU),1);
         %Calculate the divided values
         for i = 1:length(dU)
             Div(i) = dU(i)/dT(i);
@@ -208,6 +212,101 @@ end
          ylabel('Voltage (mV)');
       end
    end
+
+% --- Executes on button press in hrec
+function recbtn_Callback(source, eventdata)
+    if isequal(FileName,0)
+        errordlg('No File Selected - select a file for analysis','File Error');
+        set(hfile, 'String', 'Select a File to Proceed');
+    else
+        [C1.dU, C1.dUm1, C1.dT, C1.dTm1, C1.Div, C1.Div1] = PSA(strcat(PathName, 'Corona1.txt'));
+        [C2.dU, C2.dUm1, C2.dT, C2.dTm1, C2.Div, C2.Div1] = PSA(strcat(PathName, 'Corona2.txt'));
+        [V2.dU, V2.dUm1, V2.dT, V2.dTm1, V2.Div, V2.Div1] = PSA(strcat(PathName, 'Void2.txt'));
+        [V3.dU, V3.dUm1, V3.dT, V3.dTm1, V3.Div, V3.Div1] = PSA(strcat(PathName, 'Void3.txt'));
+        [S2.dU, S2.dUm1, S2.dT, S2.dTm1, S2.Div, S2.Div1] = PSA(strcat(PathName, 'Surface2.txt'));
+        [S4.dU, S4.dUm1, S4.dT, S4.dTm1, S4.Div, S4.Div1] = PSA(strcat(PathName, 'Surface4.txt'));
+        [dU, dUm1, dT, dTm1, Div, Div1]= PSA(FullPathName);
+
+        n = 10
+        
+        if(length(C1.dU) > n)
+            n = length(C1.dU);
+        end
+        if(length(C2.dU) > n)
+            n = length(C2.dU);
+        end
+        if(length(V2.dU) > n)
+            n = length(V2.dU);
+        end
+        if(length(V3.dU) > n)
+            n = length(V3.dU);
+        end
+        if(length(S2.dU) > n)
+            n = length(S2.dU);
+        end
+        if(length(S4.dU) > n)
+            n = length(S4.dU);
+        end
+        if(length(dU) > n)
+            n = length(dU);
+        end
+        n = n+1;
+        
+        C1.dU = wextend(1, 'sym', C1.dU, (n - length(C1.dU)), 'r');
+        C2.dU = wextend(1, 'sym', C2.dU, (n - length(C2.dU)), 'r');
+        V2.dU = wextend(1, 'sym', V2.dU, (n - length(V2.dU)), 'r');
+        V3.dU = wextend(1, 'sym', V3.dU, (n - length(V3.dU)), 'r');
+        S2.dU = wextend(1, 'sym', S2.dU, (n - length(S2.dU)), 'r');
+        S4.dU = wextend(1, 'sym', S4.dU, (n - length(S4.dU)), 'r');
+        dU = wextend(1, 'sym', dU, (n - length(dU)), 'r');
+        
+        Umat = [C2.dU, V2.dU, V3.dU, S2.dU, S4.dU];
+        
+        assignin('base', 'n', n);
+        for i = 1:length(C1)
+            assignin('base', 'C1', C1);
+        end
+        for i = 1:length(C2)
+            assignin('base', 'C2', C2);
+        end
+        for i = 1:length(V2)
+            assignin('base', 'V2', V2);
+        end
+        for i = 1:length(V3)
+            assignin('base', 'V3', V3);
+        end
+        for i = 1:length(S2)
+            assignin('base', 'S2', S2);
+        end
+        for i = 1:length(S4)
+            assignin('base', 'S4', S4);
+        end
+        for i = 1:length(Umat)
+            assignin('base', 'Umat', Umat);
+        end
+        
+        for i = 1:length(dU)
+            assignin('base', 'dU', dU);
+            assignin('base', 'dT', dT);
+        end
+        for i = 1:length(dUm1)
+            assignin('base', 'dUm1', dUm1);
+            assignin('base', 'dTm1', dTm1);
+        end
+        for i = 1:length(Div)
+            assignin('base', 'Div', Div);
+        end
+        for i = 1:length(Div1)
+            assignin('base', 'Div1', Div1);
+        end
+        
+        
+        %From popup function so it auto updates when run 
+        popup_menu_Callback(hpopup, 1);
+    end
+end
+
+    
         
 
 end
