@@ -90,7 +90,7 @@ function runbtn_Callback(source, eventdata)
         Div = 0;
         Div1 = 0;
         T = 0;
-        [dU, dUm1, dT, dTm1, Div, Div1, T, U]= PSA(FullPathName);
+        [dU, dUm1, dT, dTm1, Div, Div1, T, U, If]= PSA(FullPathName);
         %Dump variables to workspace - debug
         for i = 1:length(dU)
             assignin('base', 'dU', dU);
@@ -105,6 +105,9 @@ function runbtn_Callback(source, eventdata)
         end
         for i = 1:length(Div1)
             assignin('base', 'Div1', Div1);
+        end
+for i = 1:length(If)
+            assignin('base', 'If', If);
         end
         for i = 1:length(U)
             assignin('base', 'U', U);
@@ -132,28 +135,38 @@ end
          ylabel('\DeltaU_{n} (mV)');
          axis([-2, 2, -2, 2]);
       case 'Delta T' % User selects Membrane.
-         scatter(dTm1, dT, '.');
+         scatter(dT, dTm1, '.');
          title('Pulse Sequence Analysis - \DeltaT Graph');
          xlabel('\DeltaT_{n-1} (s)');
          ylabel('\DeltaT_{n} (s)');
       case 'Delta U & Delta T' % User selects Sinc.
-         scatter(Div, Div1, '.');
+         scatter(Div1, Div, '.');
          title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
          xlabel('\DeltaU_{n+1}/\DeltaT_{n}');
          ylabel('\DeltaU_{n}/\DeltaT_{n} (mV)');
       case 'Voltage - Time' % User selects Peaks.
-         stem(T, U, '.', 'MarkerSize',0.1); 
+         Wave = linspace(0,1, 500);
+         SinWave = (sind((rem(Wave,0.02)*360)/0.02)*0.1)-1.1;
+         stem(T, U, '.', 'MarkerSize',0.1);
+         hold on
+         plot(Wave, SinWave, '-r');
+         hold off
          title('Filtered Data - Voltage Time Graph');
          xlabel('Time (s)');
          ylabel('Voltage (mV)');
+         axis([0, 1, -1.2, 1]);
       case 'Voltage - Time 1 cycle' % User selects Peaks.
+         Wave = linspace(0,1, 1000);
+         SinWave = sind((rem(Wave,0.02)*360)/0.02);
          stem(T, U, '.', 'MarkerSize',0.1);
-         
+         hold on
+         plot(Wave, SinWave, '-r');
+         hold off
          title('Filtered Data - Voltage Time Graph');
          xlabel('Time (s)');
          ylabel('Voltage (mV)'); 
          v = axis;
-         axis([0.02, 0.04, v(3), v(4)]);
+         axis([0.02, 0.04, -1, 1]);
          hold off;
         
       end
