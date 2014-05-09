@@ -1,4 +1,4 @@
-function [dU,dUm1,dT,dTm1,Div,Div1] = PSA(FilePathName)
+function [dU,dUm1,dT,dTm1,Div,Div1, T, U] = PSA(FilePathName)
        %Zero all variables in case of repeated PSA
         dU = 0;
         dT = 0;
@@ -33,20 +33,22 @@ function [dU,dUm1,dT,dTm1,Div,Div1] = PSA(FilePathName)
         T = T(abs(U)>PD_Threshold);
         U = U(abs(U)>PD_Threshold);
         
+        %Preallocate variable lengths for speed
+        dU = zeros(length(U),1);
+        dT = zeros(length(U),1);
         %dU(n) = U(n+1) - U(n)
         %dT(n) = T(n+1) - T(n)
         %Generate the delta variables
-        dU = zeros(length(U),1);
-        dT = zeros(length(U),1);
         for i = 1:(length(U)-1)
             dU(i) = U(i+1)-U(i);
             dT(i) = T(i+1)-T(i);
         end
         
-        %dU(n-1) = U(n) - U(n-1)
-        %Generate the -1 variables
+        %Preallocate variable length for speed
         dUm1 = zeros(length(U)+1,1);
         dTm1 = zeros(length(U)+1,1);
+        %dU(n-1) = U(n) - U(n-1)
+        %Generate the -1 variables
         for i = 2:length(U) %start at 2 as U0 is not an index
             dUm1(i) = U(i) - U(i-1);
             dTm1(i) = T(i) - T(i-1);
@@ -62,9 +64,9 @@ function [dU,dUm1,dT,dTm1,Div,Div1] = PSA(FilePathName)
         dU(1) = [];
         dT(1) = [];
         
+        %preallocate array length for speed
         Div = zeros(length(dU),1);
         Div1 = zeros(length(dU),1);
-  
         %Calculate the divided values
         for i = 1:length(dU)
             Div(i) = dU(i)/dT(i);

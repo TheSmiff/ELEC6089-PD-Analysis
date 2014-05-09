@@ -219,15 +219,17 @@ function recbtn_Callback(source, eventdata)
         errordlg('No File Selected - select a file for analysis','File Error');
         set(hfile, 'String', 'Select a File to Proceed');
     else
-        [C1.dU, C1.dUm1, C1.dT, C1.dTm1, C1.Div, C1.Div1] = PSA(strcat(PathName, 'Corona1.txt'));
-        [C2.dU, C2.dUm1, C2.dT, C2.dTm1, C2.Div, C2.Div1] = PSA(strcat(PathName, 'Corona2.txt'));
-        [V2.dU, V2.dUm1, V2.dT, V2.dTm1, V2.Div, V2.Div1] = PSA(strcat(PathName, 'Void2.txt'));
-        [V3.dU, V3.dUm1, V3.dT, V3.dTm1, V3.Div, V3.Div1] = PSA(strcat(PathName, 'Void3.txt'));
-        [S2.dU, S2.dUm1, S2.dT, S2.dTm1, S2.Div, S2.Div1] = PSA(strcat(PathName, 'Surface2.txt'));
-        [S4.dU, S4.dUm1, S4.dT, S4.dTm1, S4.Div, S4.Div1] = PSA(strcat(PathName, 'Surface4.txt'));
-        [dU, dUm1, dT, dTm1, Div, Div1]= PSA(FullPathName);
+        [C1.dU, C1.dUm1, C1.dT, C1.dTm1, C1.Div, C1.Div1, U, T] = PSA(strcat(PathName, 'Corona1.txt'));
+        [C2.dU, C2.dUm1, C2.dT, C2.dTm1, C2.Div, C2.Div1, U, T] = PSA(strcat(PathName, 'Corona2.txt'));
+        [V2.dU, V2.dUm1, V2.dT, V2.dTm1, V2.Div, V2.Div1, U, T] = PSA(strcat(PathName, 'Void2.txt'));
+        [V3.dU, V3.dUm1, V3.dT, V3.dTm1, V3.Div, V3.Div1, U, T] = PSA(strcat(PathName, 'Void3.txt'));
+        [S2.dU, S2.dUm1, S2.dT, S2.dTm1, S2.Div, S2.Div1, U, T] = PSA(strcat(PathName, 'Surface2.txt'));
+        [S4.dU, S4.dUm1, S4.dT, S4.dTm1, S4.Div, S4.Div1, U, T] = PSA(strcat(PathName, 'Surface4.txt'));
+        T = 0;
+        U = 0;
+        [dU, dUm1, dT, dTm1, Div, Div1, T, U]= PSA(FullPathName);
 
-        n = 10
+        n = 10;
         
         if(length(C1.dU) > n)
             n = length(C1.dU);
