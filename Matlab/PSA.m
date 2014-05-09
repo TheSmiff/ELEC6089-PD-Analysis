@@ -1,4 +1,4 @@
-function [dU,dUm1,dT,dTm1,Div,Div1, T, U, If] = PSA(FilePathName)
+function [dU,dUm1,dT,dTm1,Div,Div1, T, U, I] = PSA(FilePathName)
        %Zero all variables in case of repeated PSA
        clear dU dT dUm1 dTm1 Div Div1 T I If n U; 
 
@@ -19,10 +19,10 @@ function [dU,dUm1,dT,dTm1,Div,Div1, T, U, If] = PSA(FilePathName)
         %Unextend it and free up memory
         n = length(I);
         I = If(1:n);
-        %clear If;
+        clear If;
         
         %Filter the Variables to find the PD peaks
-        PD_Threshold = 0.3;
+        PD_Threshold = 0.25;
         T = T(I>PD_Threshold);
         I = I(I>PD_Threshold);
         U = sind((rem(T,0.02)*360)/0.02);
