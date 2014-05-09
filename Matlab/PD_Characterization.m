@@ -91,6 +91,25 @@ function runbtn_Callback(source, eventdata)
         Div1 = 0;
         T = 0;
         [dU, dUm1, dT, dTm1, Div, Div1, T, U]= PSA(FullPathName);
+        %Dump variables to workspace - debug
+        for i = 1:length(dU)
+            assignin('base', 'dU', dU);
+            assignin('base', 'dT', dT);
+        end
+        for i = 1:length(dUm1)
+            assignin('base', 'dUm1', dUm1);
+            assignin('base', 'dTm1', dTm1);
+        end
+        for i = 1:length(Div)
+            assignin('base', 'Div', Div);
+        end
+        for i = 1:length(Div1)
+            assignin('base', 'Div1', Div1);
+        end
+        for i = 1:length(U)
+            assignin('base', 'U', U);
+            assignin('base', 'T', T);
+        end
         %From popup function so it auto updates when run 
         popup_menu_Callback(hpopup, 1);
     end
@@ -109,13 +128,14 @@ end
       case 'Delta U' % User selects Peaks.
          scatter(dU, dUm1, '.');
          title('Pulse Sequence Analysis - \DeltaU Graph');
-         xlabel('\DeltaU_{n} (mV)');
-         ylabel('\DeltaU_{n+1} (mV)');
+         xlabel('\DeltaU_{n-1} (mV)');
+         ylabel('\DeltaU_{n} (mV)');
+         axis([-2, 2, -2, 2]);
       case 'Delta T' % User selects Membrane.
-         scatter(dT, dTm1, '.');
+         scatter(dTm1, dT, '.');
          title('Pulse Sequence Analysis - \DeltaT Graph');
-         xlabel('\DeltaT_{n} (s)');
-         ylabel('\DeltaT_{n+1} (s)');
+         xlabel('\DeltaT_{n-1} (s)');
+         ylabel('\DeltaT_{n} (s)');
       case 'Delta U & Delta T' % User selects Sinc.
          scatter(Div, Div1, '.');
          title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
@@ -128,6 +148,7 @@ end
          ylabel('Voltage (mV)');
       case 'Voltage - Time 1 cycle' % User selects Peaks.
          stem(T, U, '.', 'MarkerSize',0.1);
+         
          title('Filtered Data - Voltage Time Graph');
          xlabel('Time (s)');
          ylabel('Voltage (mV)'); 
