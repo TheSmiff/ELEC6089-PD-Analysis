@@ -90,6 +90,7 @@ function runbtn_Callback(source, eventdata)
         Div = 0;
         Div1 = 0;
         T = 0;
+        If = 0;
         [dU, dUm1, dT, dTm1, Div, Div1, T, U, If]= PSA(FullPathName);
         %Dump variables to workspace - debug
         for i = 1:length(dU)
@@ -106,7 +107,7 @@ function runbtn_Callback(source, eventdata)
         for i = 1:length(Div1)
             assignin('base', 'Div1', Div1);
         end
-for i = 1:length(If)
+        for i = 1:length(If)
             assignin('base', 'If', If);
         end
         for i = 1:length(U)
