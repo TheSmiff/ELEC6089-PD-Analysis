@@ -42,7 +42,8 @@ hfile = uicontrol('Style','text','String','Select a File to Proceed',...
     'Position',[535,345,130,25]);
 %Drop Down Menu
 hpopup = uicontrol('Style','popupmenu',...
-    'String',{'Delta U','Delta T','Delta U & Delta T','Voltage - Time','Voltage - Time 1 cycle','Classification by dU/dT'},...
+    'String',{'Delta U','Delta T','Delta U & Delta T','Voltage - Time',...
+    'Voltage - Time 1 cycle','Classification by dU/dT','Class Probability'},...
     'Position',[425,250,200,25],...
     'Callback',{@popup_menu_Callback});
 %Axes
@@ -112,6 +113,7 @@ CUe = 0;
 VUe = 0;
 SUe = 0;
 Class = 0;
+recflag = 0;
 
 % --- Executes on button press in hopen.
     function openbtn_Callback(source,eventdata)
@@ -155,8 +157,7 @@ Class = 0;
             set(hsurf, 'String', SurfaceName);
             if (isempty(strfind(SurfaceName, '.txt')))
                 warndlg('File selected is not a supported data format','Format Warning');
-            end%if
-            warndlg('Check that all 6 stock files stored in same folder as file for analysis','Check Format');
+            end
         end%ifelse
     end %function
 
@@ -171,7 +172,6 @@ Class = 0;
             if (isempty(strfind(VoidName, '.txt')))
                 warndlg('File selected is not a supported data format','Format Warning');
             end%if
-            warndlg('Check that all 6 stock files stored in same folder as file for analysis','Check Format');
         end%ifelse
     end %function
 
@@ -181,6 +181,10 @@ function runbtn_Callback(source, eventdata)
         errordlg('No File Selected - select a file for analysis','File Error');
         set(hfile, 'String', 'Select a File to Proceed');
     else
+        %Since it is not recognition
+        recflag = 0;
+        set(hrectext, 'String', '');
+        %Just normal PSA
         [dU, dUm1, dT, dTm1, Div, Div1, T, U]= PSA(FullPathName);
         %Dump variables to workspace - debug
         %         for i = 1:length(dU)
@@ -256,8 +260,10 @@ end
          v = axis;
          axis([0.02, 0.04, -1, 1]);
          hold off;
-
      case 'Classification by dU/dT' % User selects Peaks.
+         if(~isequal(recflag,1))
+               errordlg('Not available without running recognition','Program Error');
+         else
          scatter(dUw(:,1),dUw(:,2), '.b');
          hold on
          scatter(CUw(:,1),CUw(:,2), '.r');
@@ -269,7 +275,15 @@ end
          ylabel('Voltage (mV)'); 
          legend('\DeltaU plot Features', 'Corona Features', 'Surface Features', 'Void Features');
          hold off;
-        
+         end
+       case 'Class Probability' % User selects Peaks.
+         if(~isequal(recflag,1))
+               errordlg('Not available without running recognition','Program Error');
+         else
+         bar([CUe SUe VUe]);
+         set(ha, 'XTickLabel',{'Corona','Surface','Void'});
+         hold off;
+         end
       end
    end
             
@@ -291,6 +305,7 @@ end
                         errordlg('No File Selected - select a file for analysis','File Error');
                         set(hfile, 'String', 'Select a File to Proceed');
                     else
+                        recflag = 1;
                         clear dU dT dUm1 dTm1 Div Div1 T I If n U 
                         clear C.dU C.dUm1 C.dT C.dTm1 C.Div C.Div1
                         clear V.dU V.dUm1 V.dT V.dTm1 V.Div V.Div1 S.dU
@@ -306,27 +321,40 @@ end
                         VUmat = [transpose(V.Div); transpose(V.Div1)];
                         dUmat = [transpose(Div); transpose(Div1)];
                         
+                        
+                        set(hrectext, 'String', 'Corona Network 1/4');
+                        drawnow();
                         CUnet = competlayer(20,.1);
                         CUnet = configure(CUnet,CUmat);
                         CUnet.trainParam.epochs = 15;
+                        CUnet.trainParam.showWindow = false;
                         CUnet = train(CUnet,CUmat);
                         CUw = CUnet.IW{1};
                         
+                        set(hrectext, 'String', 'Surface Network 2/4');
+                        drawnow();
                         SUnet = competlayer(20,.1);
                         SUnet = configure(SUnet,SUmat);
                         SUnet.trainParam.epochs = 15;
+                        SUnet.trainParam.showWindow = false;
                         SUnet = train(SUnet,SUmat);
                         SUw = SUnet.IW{1};
                         
+                        set(hrectext, 'String', 'Void Network 3/4');
+                        drawnow();
                         VUnet = competlayer(20,.1);
                         VUnet = configure(VUnet,VUmat);
                         VUnet.trainParam.epochs = 15;
+                        VUnet.trainParam.showWindow = false;
                         VUnet = train(VUnet,VUmat);
                         VUw = VUnet.IW{1};
                         
+                        set(hrectext, 'String', 'Unknown Network 4/4');
+                        drawnow();
                         dUnet = competlayer(20,.1);
                         dUnet = configure(dUnet,dUmat);
                         dUnet.trainParam.epochs = 15;
+                        dUnet.trainParam.showWindow = false;
                         dUnet = train(dUnet,dUmat);
                         dUw = dUnet.IW{1};
                         
@@ -365,8 +393,7 @@ end
                         assignin('base', 'dUw', dUw);
                         assignin('base', 'CUe', CUe);
                         assignin('base', 'SUe', SUe);
-                        assignin('base', 'VUe', VUe);
-                                               
+                        assignin('base', 'VUe', VUe);                     
                         for i = 1:length(dU)
                             assignin('base', 'dU', dU);
                             assignin('base', 'dT', dT);
@@ -390,7 +417,6 @@ end
                         for i = 1:length(S)
                             assignin('base', 'S', S);
                         end
-                        
                         
                         %From popup function so it auto updates when run
                         popup_menu_Callback(hpopup, 1);
