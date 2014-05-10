@@ -29,7 +29,7 @@ hrun  = uicontrol('Style','pushbutton','String','Run PSA',...
 
 %Run Recognition Button
 hrec  = uicontrol('Style','pushbutton','String','Run Recognition',...
-    'Position',[525,300,100,25],'BackgroundColor', [0.9 0.9 0.9],...
+    'Position',[425,50,100,25],'BackgroundColor', [0.9 0.9 0.9],...
     'Callback',{@recbtn_Callback});
 %File text
 hfile = uicontrol('Style','text','String','Select a File to Proceed',...
@@ -38,11 +38,40 @@ hfile = uicontrol('Style','text','String','Select a File to Proceed',...
     'Position',[510,345,130,25]);
 %Drop Down Menu
 hpopup = uicontrol('Style','popupmenu',...
-    'String',{'Delta U','Delta T','Delta U & Delta T','Voltage - Time'},...
+    'String',{'Delta U','Delta T','Delta U & Delta T','Voltage - Time','Voltage - Time 1 cycle'},...
     'Position',[425,250,200,25],...
     'Callback',{@popup_menu_Callback});
 %Axes
 ha = axes('Units','Pixels','Position',[65,50,350,350]);
+
+%Open Corona Button
+hopencor = uicontrol('Style','pushbutton','String','Open Corona File',...
+    'Position',[425,200,100,25],'BackgroundColor', [0.9 0.9 0.9],...
+    'Callback',{@opencorbtn_Callback});
+%File text
+hcor = uicontrol('Style','text','String','Corona1.txt',...
+    'HorizontalAlignment', 'left',...
+    'BackgroundColor', [0.8 0.8 0.8],...
+    'Position',[535,195,130,25]);
+%Open Button
+hopensurf = uicontrol('Style','pushbutton','String','Open Surface File',...
+    'Position',[425,150,100,25],'BackgroundColor', [0.9 0.9 0.9],...
+    'Callback',{@opensurfbtn_Callback});
+%File text
+hsurf = uicontrol('Style','text','String','Surface2.txt',...
+    'HorizontalAlignment', 'left',...
+    'BackgroundColor', [0.8 0.8 0.8],...
+    'Position',[535,145,130,25]);
+%Open Button
+hopenvoid = uicontrol('Style','pushbutton','String','Open Void File',...
+    'Position',[425,100,100,25],'BackgroundColor', [0.9 0.9 0.9],...
+    'Callback',{@openvoidbtn_Callback});
+%File text
+hvoid = uicontrol('Style','text','String','Void2.txt',...
+    'HorizontalAlignment', 'left',...
+    'BackgroundColor', [0.8 0.8 0.8],...
+    'Position',[535,95,130,25]);
+
 
 % Move the GUI to the center of the screen.
 movegui(fig1,'center')
@@ -65,6 +94,12 @@ Div = 0;
 Div1 = 0;
 T = 0;
 FullPathName = 0;
+CoronaName = get(hcor, 'String');
+CoronaPath = 0;
+SurfaceName = get(hsurf, 'String');
+SurfacePath = 0;
+VoidName = get(hvoid, 'String');
+VoidPath = 0;
 
 % --- Executes on button press in hopen.
     function openbtn_Callback(source,eventdata)
@@ -74,8 +109,54 @@ FullPathName = 0;
             set(hfile, 'String', 'Select a File to Proceed');
         else
             FullPathName = strcat(PathName, FileName);
+            CoronaPath = PathName;
+            SurfacePath = PathName;
+            VoidPath = PathName;
             set(hfile, 'String', FileName);
             if (isempty(strfind(FileName, '.txt')))
+                warndlg('File selected is not a supported data format','Format Warning');
+            end%if
+        end%ifelse
+    end %function
+
+% --- Executes on button press in hopen.
+    function opencorbtn_Callback(source,eventdata)
+        [CoronaName,CoronaPath] = uigetfile({'*.txt'},'Select the Partial Discharge Data file for analysis');
+        if isequal(CoronaName,0)
+            errordlg('No File Selected','File Error');
+            set(hcor, 'String', 'Select a File to Proceed');
+        else
+            set(hcor, 'String', CoronaName);
+            if (isempty(strfind(CoronaName, '.txt')))
+                warndlg('File selected is not a supported data format','Format Warning');
+            end%if
+        end%ifelse
+    end %function
+
+% --- Executes on button press in hopen.
+    function opensurfbtn_Callback(source,eventdata)
+        [SurfaceName,SurfacePath] = uigetfile({'*.txt'},'Select the Partial Discharge Data file for analysis');
+        if isequal(SurfaceName,0)
+            errordlg('No File Selected','File Error');
+            set(hsurf, 'String', 'Select a File to Proceed');
+        else
+            set(hsurf, 'String', SurfaceName);
+            if (isempty(strfind(SurfaceName, '.txt')))
+                warndlg('File selected is not a supported data format','Format Warning');
+            end%if
+            warndlg('Check that all 6 stock files stored in same folder as file for analysis','Check Format');
+        end%ifelse
+    end %function
+
+% --- Executes on button press in hopen.
+    function openvoidbtn_Callback(source,eventdata)
+        [VoidName,VoidPath] = uigetfile({'*.txt'},'Select the Partial Discharge Data file for analysis');
+        if isequal(VoidName,0)
+            errordlg('No File Selected','File Error');
+            set(hvoid, 'String', 'Select a File to Proceed');
+        else
+            set(hvoid, 'String', VoidName);
+            if (isempty(strfind(VoidName, '.txt')))
                 warndlg('File selected is not a supported data format','Format Warning');
             end%if
             warndlg('Check that all 6 stock files stored in same folder as file for analysis','Check Format');
@@ -88,94 +169,27 @@ function runbtn_Callback(source, eventdata)
         errordlg('No File Selected - select a file for analysis','File Error');
         set(hfile, 'String', 'Select a File to Proceed');
     else
-        %Zero all variables in case of repeated PSA
-        dU = 0;
-        dT = 0;
-        dUm1 = 0;
-        dTm1 = 0;
-        Div = 0;
-        Div1 = 0;
-        T = 0;
-        
-        %Import the voltage file (assumed mV following discussion during
-        %lecture on 06/05/2014)
-        U = importdata(FullPathName);
-        %Evenly distribute the time - we know it is 1 second
-        T = transpose(linspace(0,1,length(U)));
-        
-        % --- Filtering
-        %Extend U to next power of two length for wavelet transform
-        n = 524288 - length(U);
-        Uf = wextend(1, 'sym', U, n, 'r');
-        %Use function generated by tool
-        Uf = func_denoise_sw1d(Uf);
-        %Unextend it and free up memory
-        n = length(U);
-        U = Uf(1:n);
-        Uf = 0;
-        
-        %Filter the Variables to find the PD peaks
-        PD_Threshold = 0.3;
-        T = T(abs(U)>PD_Threshold);
-        U = U(abs(U)>PD_Threshold);
-        
-        %dU(n) = U(n+1) - U(n)
-        %dT(n) = T(n+1) - T(n)
-        %Generate the delta variables
-        dU = zeros(length(U));
-        dT = zeros(length(U));
-        for i = 1:(length(U)-1)
-            dU(i) = U(i+1)-U(i);
-            dT(i) = T(i+1)-T(i);
-        end
-        
-        %dU(n-1) = U(n) - U(n-1)
-        %Generate the -1 variables
-        dUm1 = zeros(length(U)+1);
-        dTm1 = zeros(length(U)+1);
-        for i = 2:length(U) %start at 2 as U0 is not an index
-            dUm1(i) = U(i) - U(i-1);
-            dTm1(i) = T(i) - T(i-1);
-        end
-        
-        %Delete index 1 of minus ones as they are unasigned
-        dUm1(1) = [];
-        dTm1(1) = [];
-        %Also need to delete ends to make same length vectors
-        dUm1(length(dUm1)) = [];
-        dTm1(length(dTm1)) = [];
-        %Delete vector 1 of the n values to keep offset
-        dU(1) = [];
-        dT(1) = [];
-        
-        %Calculate the divided values
-        for i = 1:length(dU)
-            Div(i) = dU(i)/dT(i);
-            Div1(i) = dUm1(i)/dTm1(i);
-        end
-        
-        %These for loops put the values into the workspace for debugging
-        for i = 1:length(T)
-            assignin('base', 'T', T);
-            assignin('base', 'U', U);
-            assignin('base', 'Uf', Uf);
-        end
-        for i = 1:length(dU)
-            assignin('base', 'dU', dU);
-            assignin('base', 'dT', dT);
-        end
-        for i = 1:length(dUm1)
-            assignin('base', 'dUm1', dUm1);
-            assignin('base', 'dTm1', dTm1);
-        end
-        for i = 1:length(Div)
-            assignin('base', 'Div', Div);
-        end
-        for i = 1:length(Div1)
-            assignin('base', 'Div1', Div1);
-        end
-        
-        %From popup function so it auto updates when run 
+        [dU, dUm1, dT, dTm1, Div, Div1, T, U]= PSA(FullPathName);
+        %Dump variables to workspace - debug
+        %         for i = 1:length(dU)
+        %             assignin('base', 'dU', dU);
+        %             assignin('base', 'dT', dT);
+        %         end
+        %         for i = 1:length(dUm1)
+        %             assignin('base', 'dUm1', dUm1);
+        %             assignin('base', 'dTm1', dTm1);
+        %         end
+        %         for i = 1:length(Div)
+        %             assignin('base', 'Div', Div);
+        %         end
+        %         for i = 1:length(Div1)
+        %             assignin('base', 'Div1', Div1);
+        %         end
+        %         for i = 1:length(U)
+        %             assignin('base', 'U', U);
+        %             assignin('base', 'T', T);
+        %         end
+        %From popup function so it auto updates when run
         popup_menu_Callback(hpopup, 1);
     end
 end
@@ -191,122 +205,149 @@ end
       % Set current data to the selected data set.
       switch str{val};
       case 'Delta U' % User selects Peaks.
-         scatter(dU, dUm1, '.');
+         scatter(dUm1, dU, '.');
          title('Pulse Sequence Analysis - \DeltaU Graph');
-         xlabel('\DeltaU_{n} (mV)');
-         ylabel('\DeltaU_{n+1} (mV)');
+         xlabel('\DeltaU_{n-1} (mV)');
+         ylabel('\DeltaU_{n} (mV)');
+         axis([-2, 2, -2, 2]);
       case 'Delta T' % User selects Membrane.
-         scatter(dT, dTm1, '.');
+         scatter(dTm1, dT, '.');
          title('Pulse Sequence Analysis - \DeltaT Graph');
-         xlabel('\DeltaT_{n} (s)');
-         ylabel('\DeltaT_{n+1} (s)');
+         xlabel('\DeltaT_{n-1} (s)');
+         ylabel('\DeltaT_{n} (s)');
       case 'Delta U & Delta T' % User selects Sinc.
-         scatter(Div, Div1, '.');
+         scatter(Div1, Div, '.');
          title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
-         xlabel('\DeltaU_{n+1}/\DeltaT_{n}');
+         xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
          ylabel('\DeltaU_{n}/\DeltaT_{n} (mV)');
       case 'Voltage - Time' % User selects Peaks.
-         stem(T, U, '.', 'MarkerSize',0.1); 
+         Wave = linspace(0,1, 500);
+         SinWave = (sind((rem(Wave,0.02)*360)/0.02)*0.1)-1.1;
+         stem(T, U, '.', 'MarkerSize',0.1);
+         hold on
+         plot(Wave, SinWave, '-r');
+         hold off
          title('Filtered Data - Voltage Time Graph');
          xlabel('Time (s)');
          ylabel('Voltage (mV)');
+         axis([0, 1, -1.2, 1]);
+      case 'Voltage - Time 1 cycle' % User selects Peaks.
+         Wave = linspace(0,1, 1000);
+         SinWave = sind((rem(Wave,0.02)*360)/0.02);
+         stem(T, U, '.', 'MarkerSize',0.1);
+         hold on
+         plot(Wave, SinWave, '-r');
+         hold off
+         title('Filtered Data - Voltage Time Graph');
+         xlabel('Time (s)');
+         ylabel('Voltage (mV)'); 
+         v = axis;
+         axis([0.02, 0.04, -1, 1]);
+         hold off;
+        
       end
    end
-
+            
 % --- Executes on button press in hrec
-function recbtn_Callback(source, eventdata)
-    if isequal(FileName,0)
-        errordlg('No File Selected - select a file for analysis','File Error');
-        set(hfile, 'String', 'Select a File to Proceed');
-    else
-        [C1.dU, C1.dUm1, C1.dT, C1.dTm1, C1.Div, C1.Div1, U, T] = PSA(strcat(PathName, 'Corona1.txt'));
-        [C2.dU, C2.dUm1, C2.dT, C2.dTm1, C2.Div, C2.Div1, U, T] = PSA(strcat(PathName, 'Corona2.txt'));
-        [V2.dU, V2.dUm1, V2.dT, V2.dTm1, V2.Div, V2.Div1, U, T] = PSA(strcat(PathName, 'Void2.txt'));
-        [V3.dU, V3.dUm1, V3.dT, V3.dTm1, V3.Div, V3.Div1, U, T] = PSA(strcat(PathName, 'Void3.txt'));
-        [S2.dU, S2.dUm1, S2.dT, S2.dTm1, S2.Div, S2.Div1, U, T] = PSA(strcat(PathName, 'Surface2.txt'));
-        [S4.dU, S4.dUm1, S4.dT, S4.dTm1, S4.Div, S4.Div1, U, T] = PSA(strcat(PathName, 'Surface4.txt'));
-        T = 0;
-        U = 0;
-        [dU, dUm1, dT, dTm1, Div, Div1, T, U]= PSA(FullPathName);
+    function recbtn_Callback(source, eventdata)
+        if isequal(CoronaName,0)
+            errordlg('No Corona File Selected - select a file for analysis','File Error');
+            set(hcor, 'String', 'Select a File to Proceed');
+        else
+            if isequal(SurfaceName,0)
+                errordlg('No Surface File Selected - select a file for analysis','File Error');
+                set(hsurf, 'String', 'Select a File to Proceed');
+            else
+                if isequal(VoidName,0)
+                    errordlg('No Void File Selected - select a file for analysis','File Error');
+                    set(hvoid, 'String', 'Select a File to Proceed');
+                else
+                    if isequal(FileName,0)
+                        errordlg('No File Selected - select a file for analysis','File Error');
+                        set(hfile, 'String', 'Select a File to Proceed');
+                    else
+                        clear dU dT dUm1 dTm1 Div Div1 T I If n U 
+                        clear C.dU C.dUm1 C.dT C.dTm1 C.Div C.Div1
+                        clear V.dU V.dUm1 V.dT V.dTm1 V.Div V.Div1S.dU
+                        clear S.dUm1 S.dT S.dTm1 S.Div S.Div1
+                        clear CdU SdU VdU CdT SdT SdV maxU dUpad dTpad
+                        [C.dU, ~, C.dT, ~, ~, ~, ~, ~] = PSA(strcat(CoronaPath, CoronaName));
+                        [V.dU, ~, V.dT, ~, ~, ~, ~, ~] = PSA(strcat(SurfacePath, SurfaceName));
+                        [S.dU, ~, S.dT, ~, ~, ~, ~, ~] = PSA(strcat(VoidPath, VoidName));
+                        [dU, dUm1, dT, dTm1, Div, Div1, T, U]= PSA(FullPathName);
+                                                
+                        %Pad dU and dT with 0s to maximum length
+                        maxU = length(C.dU);
+                        if(maxU < length(V.dU))
+                            maxU = length(V.dU);
+                        end
+                        if(maxU < length(S.dU))
+                            maxU = length(S.dU);
+                        end
+                        if(maxU < length(dU))
+                            maxU = length(dU);
+                        end
 
-        n = 10;
-        
-        if(length(C1.dU) > n)
-            n = length(C1.dU);
+                        dUpad = [dU; transpose(zeros(1,(maxU-length(dU))))];
+                        dTpad = [dT; transpose(zeros(1,(maxU-length(dT))))];
+                        C.dU = [C.dU; transpose(zeros(1,(maxU-length(C.dU))))];
+                        C.dT = [C.dT; transpose(zeros(1,(maxU-length(C.dT))))];
+                        S.dU = [S.dU; transpose(zeros(1,(maxU-length(S.dU))))];
+                        S.dT = [S.dT; transpose(zeros(1,(maxU-length(S.dT))))];
+                        V.dU = [V.dU; transpose(zeros(1,(maxU-length(V.dU))))];
+                        V.dT = [V.dT; transpose(zeros(1,(maxU-length(V.dT))))];
+
+                        
+                        UC = diag(pdist2(dUpad, C.dU));
+                        US = diag(pdist2(dUpad, S.dU));
+                        UV = diag(pdist2(dUpad, V.dU));
+                        TC = diag(pdist2(dTpad, C.dT));
+                        TS = diag(pdist2(dTpad, S.dT));
+                        TV = diag(pdist2(dTpad, V.dT));
+
+                        assignin('base', 'UC', UC);
+                        assignin('base', 'US', US);
+                        assignin('base', 'UV', UV);
+                        assignin('base', 'TC', TC);
+                        assignin('base', 'TS', TS);
+                        assignin('base', 'TV', TV);
+                        assignin('base', 'dUpad', dUpad);
+                        assignin('base', 'dTpad', dTpad);
+                        assignin('base', 'maxU', maxU);
+
+                        
+                        for i = 1:length(dU)
+                            assignin('base', 'dU', dU);
+                            assignin('base', 'dT', dT);
+                        end
+                        for i = 1:length(dUm1)
+                            assignin('base', 'dUm1', dUm1);
+                            assignin('base', 'dTm1', dTm1);
+                        end
+                        for i = 1:length(Div)
+                            assignin('base', 'Div', Div);
+                        end
+                        for i = 1:length(Div1)
+                            assignin('base', 'Div1', Div1);
+                        end
+                        for i = 1:length(C)
+                            assignin('base', 'C', C);
+                        end
+                        for i = 1:length(V)
+                            assignin('base', 'V', V);
+                        end
+                        for i = 1:length(S)
+                            assignin('base', 'S', S);
+                        end
+                        
+                        
+                        %From popup function so it auto updates when run
+                        popup_menu_Callback(hpopup, 1);
+                    end
+                end
+            end
         end
-        if(length(C2.dU) > n)
-            n = length(C2.dU);
-        end
-        if(length(V2.dU) > n)
-            n = length(V2.dU);
-        end
-        if(length(V3.dU) > n)
-            n = length(V3.dU);
-        end
-        if(length(S2.dU) > n)
-            n = length(S2.dU);
-        end
-        if(length(S4.dU) > n)
-            n = length(S4.dU);
-        end
-        if(length(dU) > n)
-            n = length(dU);
-        end
-        n = n+1;
-        
-        C1.dU = wextend(1, 'sym', C1.dU, (n - length(C1.dU)), 'r');
-        C2.dU = wextend(1, 'sym', C2.dU, (n - length(C2.dU)), 'r');
-        V2.dU = wextend(1, 'sym', V2.dU, (n - length(V2.dU)), 'r');
-        V3.dU = wextend(1, 'sym', V3.dU, (n - length(V3.dU)), 'r');
-        S2.dU = wextend(1, 'sym', S2.dU, (n - length(S2.dU)), 'r');
-        S4.dU = wextend(1, 'sym', S4.dU, (n - length(S4.dU)), 'r');
-        dU = wextend(1, 'sym', dU, (n - length(dU)), 'r');
-        
-        Umat = [C2.dU, V2.dU, V3.dU, S2.dU, S4.dU];
-        
-        assignin('base', 'n', n);
-        for i = 1:length(C1)
-            assignin('base', 'C1', C1);
-        end
-        for i = 1:length(C2)
-            assignin('base', 'C2', C2);
-        end
-        for i = 1:length(V2)
-            assignin('base', 'V2', V2);
-        end
-        for i = 1:length(V3)
-            assignin('base', 'V3', V3);
-        end
-        for i = 1:length(S2)
-            assignin('base', 'S2', S2);
-        end
-        for i = 1:length(S4)
-            assignin('base', 'S4', S4);
-        end
-        for i = 1:length(Umat)
-            assignin('base', 'Umat', Umat);
-        end
-        
-        for i = 1:length(dU)
-            assignin('base', 'dU', dU);
-            assignin('base', 'dT', dT);
-        end
-        for i = 1:length(dUm1)
-            assignin('base', 'dUm1', dUm1);
-            assignin('base', 'dTm1', dTm1);
-        end
-        for i = 1:length(Div)
-            assignin('base', 'Div', Div);
-        end
-        for i = 1:length(Div1)
-            assignin('base', 'Div1', Div1);
-        end
-        
-        
-        %From popup function so it auto updates when run 
-        popup_menu_Callback(hpopup, 1);
     end
-end
 
     
         

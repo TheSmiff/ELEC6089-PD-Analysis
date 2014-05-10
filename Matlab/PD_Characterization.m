@@ -82,38 +82,27 @@ function runbtn_Callback(source, eventdata)
         errordlg('No File Selected - select a file for analysis','File Error');
         set(hfile, 'String', 'Select a File to Proceed');
     else
-        %Zero all variables in case of repeated PSA
-        dU = 0;
-        dT = 0;
-        dUm1 = 0;
-        dTm1 = 0;
-        Div = 0;
-        Div1 = 0;
-        T = 0;
-        If = 0;
-        [dU, dUm1, dT, dTm1, Div, Div1, T, U, If]= PSA(FullPathName);
+        clear dU dT dUm1 dTm1 Div Div1 T I If n U; 
+        [dU, dUm1, dT, dTm1, Div, Div1, T, U]= PSA(FullPathName);
         %Dump variables to workspace - debug
-        for i = 1:length(dU)
-            assignin('base', 'dU', dU);
-            assignin('base', 'dT', dT);
-        end
-        for i = 1:length(dUm1)
-            assignin('base', 'dUm1', dUm1);
-            assignin('base', 'dTm1', dTm1);
-        end
-        for i = 1:length(Div)
-            assignin('base', 'Div', Div);
-        end
-        for i = 1:length(Div1)
-            assignin('base', 'Div1', Div1);
-        end
-        for i = 1:length(If)
-            assignin('base', 'If', If);
-        end
-        for i = 1:length(U)
-            assignin('base', 'U', U);
-            assignin('base', 'T', T);
-        end
+%         for i = 1:length(dU)
+%             assignin('base', 'dU', dU);
+%             assignin('base', 'dT', dT);
+%         end
+%         for i = 1:length(dUm1)
+%             assignin('base', 'dUm1', dUm1);
+%             assignin('base', 'dTm1', dTm1);
+%         end
+%         for i = 1:length(Div)
+%             assignin('base', 'Div', Div);
+%         end
+%         for i = 1:length(Div1)
+%             assignin('base', 'Div1', Div1);
+%         end
+%         for i = 1:length(U)
+%             assignin('base', 'U', U);
+%             assignin('base', 'T', T);
+%         end
         %From popup function so it auto updates when run 
         popup_menu_Callback(hpopup, 1);
     end
@@ -130,20 +119,20 @@ end
       % Set current data to the selected data set.
       switch str{val};
       case 'Delta U' % User selects Peaks.
-         scatter(dU, dUm1, '.');
+         scatter(dUm1, dU, '.');
          title('Pulse Sequence Analysis - \DeltaU Graph');
          xlabel('\DeltaU_{n-1} (mV)');
          ylabel('\DeltaU_{n} (mV)');
          axis([-2, 2, -2, 2]);
       case 'Delta T' % User selects Membrane.
-         scatter(dT, dTm1, '.');
+         scatter(dTm1, dT, '.');
          title('Pulse Sequence Analysis - \DeltaT Graph');
          xlabel('\DeltaT_{n-1} (s)');
          ylabel('\DeltaT_{n} (s)');
       case 'Delta U & Delta T' % User selects Sinc.
          scatter(Div1, Div, '.');
          title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
-         xlabel('\DeltaU_{n+1}/\DeltaT_{n}');
+         xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
          ylabel('\DeltaU_{n}/\DeltaT_{n} (mV)');
       case 'Voltage - Time' % User selects Peaks.
          Wave = linspace(0,1, 500);
