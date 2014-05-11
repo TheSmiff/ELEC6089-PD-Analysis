@@ -76,6 +76,11 @@ hvoid = uicontrol('Style','text','String','Void2.txt',...
     'HorizontalAlignment', 'left',...
     'BackgroundColor', [0.8 0.8 0.8],...
     'Position',[535,95,130,25]);
+%Author Text
+hvoid = uicontrol('Style','text','String','Authors: Thomas J. Smith & David Mahmoodi',...
+    'HorizontalAlignment', 'left',...
+    'BackgroundColor', [0.8 0.8 0.8],...
+    'Position',[435,0,300,17]);
 
 
 % Move the GUI to the center of the screen.
@@ -226,16 +231,19 @@ end
          xlabel('\DeltaU_{n-1} (mV)');
          ylabel('\DeltaU_{n} (mV)');
          axis([-2, 2, -2, 2]);
+         grid on;
       case 'Delta T' % User selects Membrane.
          scatter(dTm1, dT, '.');
          title('Pulse Sequence Analysis - \DeltaT Graph');
          xlabel('\DeltaT_{n-1} (s)');
          ylabel('\DeltaT_{n} (s)');
+         grid on;
       case 'Delta U & Delta T' % User selects Sinc.
          scatter(Div1, Div, '.');
          title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
          xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
          ylabel('\DeltaU_{n}/\DeltaT_{n} (mV)');
+         grid on;
       case 'Voltage - Time' % User selects Peaks.
          Wave = linspace(0,1, 500);
          SinWave = (sind((rem(Wave,0.02)*360)/0.02)*0.1)-1.1;
@@ -247,6 +255,7 @@ end
          xlabel('Time (s)');
          ylabel('Voltage (mV)');
          axis([0, 1, -1.2, 1]);
+         grid on;
       case 'Voltage - Time 1 cycle' % User selects Peaks.
          Wave = linspace(0,1, 1000);
          SinWave = sind((rem(Wave,0.02)*360)/0.02);
@@ -259,6 +268,7 @@ end
          ylabel('Voltage (mV)'); 
          v = axis;
          axis([0.02, 0.04, -1, 1]);
+         grid on;
          hold off;
      case 'Classification by dU/dT' % User selects Peaks.
          if(~isequal(recflag,1))
@@ -273,15 +283,39 @@ end
          title('Filtered Data - Voltage Time Graph');
          xlabel('Time (s)');
          ylabel('Voltage (mV)'); 
-         legend('\DeltaU plot Features', 'Corona Features', 'Surface Features', 'Void Features');
+         legend('\DeltaU plot Features', 'Corona Features', 'Surface Features', 'Void Features', 'Location', 'SouthEast');
+         grid on;
          hold off;
          end
        case 'Class Probability' % User selects Peaks.
          if(~isequal(recflag,1))
                errordlg('Not available without running recognition','Program Error');
          else
-         bar([CUe SUe VUe]);
-         set(ha, 'XTickLabel',{'Corona','Surface','Void'});
+         if((CUe < SUe) && (CUe < VUe))
+             hb1 = bar(1, CUe, 'r');
+             hold on
+             hb2 = bar(2, SUe, 'b');
+             hb3 = bar(3, VUe, 'b');
+         end
+         if((SUe < CUe) && (SUe < VUe))
+             hb1 = bar(1, CUe, 'b');
+             hold on
+             hb2 = bar(2, SUe, 'r');
+             hb3 = bar(3, VUe, 'b'); 
+         end
+         if((VUe < CUe) && (VUe < SUe))
+             hb1 = bar(1, CUe, 'b');
+             hold on
+             hb2 = bar(2, SUe, 'b');
+             hb3 = bar(3, VUe, 'r');
+         end
+         set(ha, 'Xtick', 1:3, 'XTickLabel',{'Corona','Surface','Void'});
+         %set(hb1, 'XTickLabel','Corona');
+         %set(hb2, 'XTickLabel','Surface');
+         %set(hb3, 'XTickLabel','Void');
+         title('Sum standardized euclidean distance between each feature');
+         ylabel('Sum se distance');
+         xlabel('Lowest bar indicates class');
          hold off;
          end
       end
@@ -358,28 +392,20 @@ end
                         dUnet = train(dUnet,dUmat);
                         dUw = dUnet.IW{1};
                         
-                        CUe = mean(pdist2(dUw, CUw, 'euclidean','Smallest', 1));
-                        SUe = mean(pdist2(dUw, SUw, 'euclidean','Smallest', 1));
-                        VUe = mean(pdist2(dUw, VUw, 'euclidean','Smallest', 1));
-                        
-                        Sum = CUe + SUe + VUe;
-                        CUe = Sum - CUe;
-                        SUe = Sum - SUe;
-                        VUe = Sum - VUe;
-                        Sum = CUe + SUe + VUe;
-                        CUe = CUe*(100/Sum);
-                        SUe = SUe*(100/Sum);
-                        VUe = VUe*(100/Sum);
-                        
+                        CUe = sum(pdist2(dUw, CUw, 'seuclidean','Smallest', 1));
+                        SUe = sum(pdist2(dUw, SUw, 'seuclidean','Smallest', 1));
+                        VUe = sum(pdist2(dUw, VUw, 'seuclidean','Smallest', 1));
+                        Sum = CUe+SUe+VUe;
+                                              
                         Class = '';
-                        if((CUe > SUe) && (CUe > VUe))
-                            Class = ['Corona: ', num2str(CUe, '%2.1f'), '%'];
+                        if((CUe < SUe) && (CUe < VUe))
+                            Class = ['Corona: ', num2str(CUe, '%2.2f'), '/', num2str(Sum, '%2.1f')];
                         end
-                        if((SUe > CUe) && (SUe > VUe))
-                            Class = ['Surface: ', num2str(SUe, '%2.1f'), '%'];
+                        if((SUe < CUe) && (SUe < VUe))
+                            Class = ['Surface: ', num2str(SUe, '%2.2f'), '/', num2str(Sum, '%2.1f')];
                         end
-                        if((VUe > CUe) && (VUe > SUe))
-                            Class = ['Void: ', num2str(VUe, '%2.1f'), '%'];
+                        if((VUe < CUe) && (VUe < SUe))
+                            Class = ['Void: ', num2str(VUe, '%2.2f'), '/', num2str(Sum, '%2.1f')];
                         end
                         set(hrectext, 'String', Class);
                         
