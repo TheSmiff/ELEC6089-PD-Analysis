@@ -5,16 +5,16 @@ wav = 'sym6';
 
 % Compute approximations of the wavelet function using the
 % cascade algorithm. 
-figure(1);
 [phi,psi,xval] = wavefun(wav,10); 
+figure(22);
+subplot(1,2, 1);
 plot(xval,psi);
-hold on
-%k = linspace(0, 11, 36);
-%plot(k, Corona1(7095:7130), '-r')
-%title('Wavelet Selection'); 
-title('Approximation of Symlet6 Wavelet');
-%legend('Approximation of Symlet6 Wavelet', 'Pulse in Partial Discharge Data', 'Location', 'SouthEast');
-hold off
+title('Symlet 6 Wavelet Function');
+xlim([0 10]);
+subplot(1, 2, 2);
+plot(xval, phi);
+title('Symlet 6 Scaling Function');
+xlim([0 10]);
 
 %Import example data
 Corona1 = importdata('../Known Data/Corona1.txt');
@@ -28,6 +28,19 @@ n = 524288 - length(Void2);
 Void2_Ext = wextend(1, 'sym', Void2, n, 'r');
 n = 524288 - length(Surface2);
 Surface2_Ext = wextend(1, 'sym', Surface2, n, 'r');
+
+figure(21);
+plot(Void2, '-b');
+hold on
+Wave = linspace(0,500002, 1000);
+SinWave = sind((rem(Wave,10000.4)*360)/10000.4);
+plot(Wave, SinWave, '-r');
+hold off
+title('Online Partial Discharge Detection Data');
+xlabel('Sample Number');
+ylabel('Signal (mV)');
+legend('Void 2 Data Set', 'Sine Wave, Magnitude = 1', 'Location', 'SouthEast');
+xlim([3500 3535]);
 
 figure(2);
 plot(Corona1_Ext);
@@ -62,10 +75,40 @@ legend('Wavelet Extended Data Set', 'Original Data Set', 'Location', 'SouthWest'
 xlim([0 524288]);
 hold off
 
+% [Cswa,Cswd] = swt(Corona1_Ext,8,'sym6');
+% [Sswa,Sswd] = swt(Surface2_Ext,8,'sym6');
+% [Vswa,Vswd] = swt(Void2_Ext,8,'sym6');
+% 
+% kp = 0; 
+% for i = 1:8
+%     subplot(8,2,kp+1), plot(Cswa(i,:));
+%     title(['Approx. cfs level ',num2str(i)])
+%     subplot(8,2,kp+2), plot(Cswd(i,:));  
+%     title(['Detail cfs level ',num2str(i)])
+%     kp = kp + 2; 
+% end
+% kp = 0; 
+% for i = 1:8
+%     subplot(8,2,kp+1), plot(Vswa(i,:));
+%     title(['Approx. cfs level ',num2str(i)])
+%     subplot(8,2,kp+2), plot(Vswd(i,:));  
+%     title(['Detail cfs level ',num2str(i)])
+%     kp = kp + 2; 
+% end
+% kp = 0; 
+% for i = 1:8
+%     subplot(8,2,kp+1), plot(Sswa(i,:));
+%     title(['Approx. cfs level ',num2str(i)])
+%     subplot(8,2,kp+2), plot(Sswd(i,:));  
+%     title(['Detail cfs level ',num2str(i)])
+%     kp = kp + 2; 
+% end
+
+
 % Filter the data
-Corona1_Filt = wden(Corona1_Ext, 'sqtwolog', 'h', 'mln', 8, 'sym6');
-Void2_Filt = wden(Void2_Ext, 'sqtwolog', 'h', 'mln', 8, 'sym6');
-Surface2_Filt = wden(Surface2_Ext, 'sqtwolog', 'h', 'mln', 8, 'sym6');
+[Corona1_Filt, CCXD, CLXD] = wden(Corona1_Ext, 'sqtwolog', 'h', 'mln', 8, 'sym6');
+[Void2_Filt, SCXD, SLXD] = wden(Void2_Ext, 'sqtwolog', 'h', 'mln', 8, 'sym6');
+[Surface2_Filt, VCXD, VLXD] = wden(Surface2_Ext, 'sqtwolog', 'h', 'mln', 8, 'sym6');
 
 figure(5);
 plot(Corona1_Ext);

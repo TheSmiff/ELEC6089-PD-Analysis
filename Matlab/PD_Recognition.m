@@ -5,7 +5,9 @@ close all;
 %  Create and then hide the GUI as it is being constructed.
 fig1 = figure('Visible','off','Position',[100,100,660,485], 'name',...
     'Partial Discharge Characterization Tool - T.Smith & D.Mahmoodi',...
-    'NumberTitle', 'off');
+    'NumberTitle', 'off', 'Resize', 'on', 'units','normalized');
+
+%movegui(fig1,'center') 
 
 % ---  Construct the components.
 
@@ -77,11 +79,47 @@ hvoid = uicontrol('Style','text','String','Void2.txt',...
     'BackgroundColor', [0.8 0.8 0.8],...
     'Position',[535,95,130,25]);
 %Author Text
-hvoid = uicontrol('Style','text','String','Authors: Thomas J. Smith & David Mahmoodi',...
+hauthors = uicontrol('Style','text','String','Authors: Thomas J. Smith & David Mahmoodi',...
     'HorizontalAlignment', 'left',...
     'BackgroundColor', [0.8 0.8 0.8],...
     'Position',[435,0,300,17]);
 
+%This means you can resize the window
+set(fig1, 'units','normalized');
+set(htitle, 'units','normalized');
+set(hlogo, 'units','normalized');
+set(hopen, 'units','normalized');
+set(hrun, 'units','normalized');
+set(hrec, 'units','normalized');
+set(hrectext, 'units','normalized');
+set(hfile, 'units','normalized');
+set(hpopup, 'units','normalized');
+set(ha, 'units','normalized');
+set(hopencor, 'units','normalized');
+set(hcor, 'units','normalized');
+set(hopensurf, 'units','normalized');
+set(hsurf, 'units','normalized');
+set(hopenvoid, 'units','normalized');
+set(hvoid, 'units','normalized');
+set(hauthors, 'units','normalized');
+
+%To resize fonts in the window
+set(htitle, 'fontunits', 'normalized');
+set(hlogo, 'fontunits', 'normalized');
+set(hopen, 'fontunits', 'normalized');
+set(hrun, 'fontunits', 'normalized');
+set(hrec, 'fontunits', 'normalized');
+set(hrectext, 'fontunits', 'normalized');
+set(hfile, 'fontunits', 'normalized');
+set(hpopup, 'fontunits', 'normalized');
+%set(ha, 'fontunits', 'normalized'); %This doesnt look so cool
+set(hopencor, 'fontunits', 'normalized');
+set(hcor, 'fontunits', 'normalized');
+set(hopensurf, 'fontunits', 'normalized');
+set(hsurf, 'fontunits', 'normalized');
+set(hopenvoid, 'fontunits', 'normalized');
+set(hvoid, 'fontunits', 'normalized');
+set(hauthors, 'fontunits', 'normalized');
 
 % Move the GUI to the center of the screen.
 movegui(fig1,'center')
@@ -323,6 +361,7 @@ end
             
 % --- Executes on button press in hrec
     function recbtn_Callback(source, eventdata)
+        %Check all four files are selected as required
         if isequal(CoronaName,0)
             errordlg('No Corona File Selected - select a file for analysis','File Error');
             set(hcor, 'String', 'Select a File to Proceed');
@@ -339,32 +378,56 @@ end
                         errordlg('No File Selected - select a file for analysis','File Error');
                         set(hfile, 'String', 'Select a File to Proceed');
                     else
+                        %initialise a progress bar
+                        hwait = waitbar(0,'Starting Recognition','Name', 'Recognizing Partial Discharge Type...');
+                        %enable the use of the last two graphs
                         recflag = 1;
+                        %Clear all variables
                         clear dU dT dUm1 dTm1 Div Div1 T I If n U 
                         clear C.dU C.dUm1 C.dT C.dTm1 C.Div C.Div1
                         clear V.dU V.dUm1 V.dT V.dTm1 V.Div V.Div1 S.dU
                         clear S.dUm1 S.dT S.dTm1 S.Div S.Div1
                         clear CdU SdU VdU CdT SdT SdV maxU dUpad dTpad Class
+                        
+                        %Perform PSA on the four selected samples
                         [C.dU, C.dUm1, C.dT, C.dTm1, C.Div, C.Div1, ~, ~] = PSA(strcat(CoronaPath, CoronaName));
-                        [V.dU, V.dUm1, V.dT, V.dTm1, S.Div, S.Div1, ~, ~] = PSA(strcat(SurfacePath, SurfaceName));
-                        [S.dU, S.dUm1, S.dT, S.dTm1, V.Div, V.Div1, ~, ~] = PSA(strcat(VoidPath, VoidName));
+                        waitbar(0.03,hwait, 'Surface PSA')
+                        [S.dU, S.dUm1, S.dT, S.dTm1, S.Div, S.Div1, ~, ~] = PSA(strcat(SurfacePath, SurfaceName));
+                        waitbar(0.06,hwait,'Void PSA')
+                        [V.dU, V.dUm1, V.dT, V.dTm1, V.Div, V.Div1, ~, ~] = PSA(strcat(VoidPath, VoidName));
+                        waitbar(0.09,hwait,'Unknown PSA')
                         [dU, dUm1, dT, dTm1, Div, Div1, T, U]= PSA(FullPathName);
                         
+                        %Produce a 2xn matrix with the Div values in the
+                        %top row and the Div1 values in the other.
                         CUmat = [transpose(C.Div); transpose(C.Div1)];
                         SUmat = [transpose(S.Div); transpose(S.Div1)];
                         VUmat = [transpose(V.Div); transpose(V.Div1)];
                         dUmat = [transpose(Div); transpose(Div1)];
                         
-                        
+                        %Use a competitive neural network to extracto 20
+                        %clusters from the corona data
+                        waitbar(0.10,hwait,'Corona Neural Network Feature Extraction')
                         set(hrectext, 'String', 'Corona Network 1/4');
                         drawnow();
+                        %Build a competitive layer network
                         CUnet = competlayer(20,.1);
+                        %Feed in the matrix data
                         CUnet = configure(CUnet,CUmat);
+                        %Set the training length (15 found to be about
+                        %right from experimentation)
                         CUnet.trainParam.epochs = 15;
+                        %Don't show the window - it spoils the professional
+                        %feel
                         CUnet.trainParam.showWindow = false;
+                        %"train" the network to give the weight vectors
                         CUnet = train(CUnet,CUmat);
+                        %20x2 matrix containing the x and y coordinates of
+                        %the cluster positions.
                         CUw = CUnet.IW{1};
                         
+                        %nn analysis of the Surface data
+                        waitbar(0.30,hwait,'Surface Neural Network Feature Extraction')
                         set(hrectext, 'String', 'Surface Network 2/4');
                         drawnow();
                         SUnet = competlayer(20,.1);
@@ -374,6 +437,8 @@ end
                         SUnet = train(SUnet,SUmat);
                         SUw = SUnet.IW{1};
                         
+                        %nn of the void data
+                        waitbar(0.50,hwait, 'Void Neural Network Feature Extraction')
                         set(hrectext, 'String', 'Void Network 3/4');
                         drawnow();
                         VUnet = competlayer(20,.1);
@@ -383,6 +448,8 @@ end
                         VUnet = train(VUnet,VUmat);
                         VUw = VUnet.IW{1};
                         
+                        %%nn of the unknown data
+                        waitbar(0.70,hwait,'Surface Neural Network Feature Extraction')
                         set(hrectext, 'String', 'Unknown Network 4/4');
                         drawnow();
                         dUnet = competlayer(20,.1);
@@ -392,11 +459,17 @@ end
                         dUnet = train(dUnet,dUmat);
                         dUw = dUnet.IW{1};
                         
-                        CUe = sum(pdist2(dUw, CUw, 'seuclidean','Smallest', 1));
-                        SUe = sum(pdist2(dUw, SUw, 'seuclidean','Smallest', 1));
-                        VUe = sum(pdist2(dUw, VUw, 'seuclidean','Smallest', 1));
+                        %Extract the shortest distance between each vector
+                        %and sum. The one it is most likely to be will be
+                        %the shortest one
+                        waitbar(0.90,hwait,'Eucledian Distance Comparison')
+                        CUe = sum(pdist2(dUw, CUw, 'euclidean','Smallest', 1));
+                        SUe = sum(pdist2(dUw, SUw, 'euclidean','Smallest', 1));
+                        VUe = sum(pdist2(dUw, VUw, 'euclidean','Smallest', 1));
+                        %For comparison
                         Sum = CUe+SUe+VUe;
-                                              
+                        
+                        %Set output string
                         Class = '';
                         if((CUe < SUe) && (CUe < VUe))
                             Class = ['Corona: ', num2str(CUe, '%2.2f'), '/', num2str(Sum, '%2.1f')];
@@ -409,43 +482,49 @@ end
                         end
                         set(hrectext, 'String', Class);
                         
-                        assignin('base', 'CUmat', CUmat);
-                        assignin('base', 'SUmat', SUmat);
-                        assignin('base', 'VUmat', VUmat);
-                        assignin('base', 'dUmat', dUmat);
-                        assignin('base', 'CUw', CUw);
-                        assignin('base', 'SUw', SUw);
-                        assignin('base', 'VUw', VUw);
-                        assignin('base', 'dUw', dUw);
-                        assignin('base', 'CUe', CUe);
-                        assignin('base', 'SUe', SUe);
-                        assignin('base', 'VUe', VUe);                     
-                        for i = 1:length(dU)
-                            assignin('base', 'dU', dU);
-                            assignin('base', 'dT', dT);
-                        end
-                        for i = 1:length(dUm1)
-                            assignin('base', 'dUm1', dUm1);
-                            assignin('base', 'dTm1', dTm1);
-                        end
-                        for i = 1:length(Div)
-                            assignin('base', 'Div', Div);
-                        end
-                        for i = 1:length(Div1)
-                            assignin('base', 'Div1', Div1);
-                        end
-                        for i = 1:length(C)
-                            assignin('base', 'C', C);
-                        end
-                        for i = 1:length(V)
-                            assignin('base', 'V', V);
-                        end
-                        for i = 1:length(S)
-                            assignin('base', 'S', S);
-                        end
+                        %Output variables to the workspace where required
+%                         assignin('base', 'CUmat', CUmat);
+%                         assignin('base', 'SUmat', SUmat);
+%                         assignin('base', 'VUmat', VUmat);
+%                         assignin('base', 'dUmat', dUmat);
+%                         assignin('base', 'CUw', CUw);
+%                         assignin('base', 'SUw', SUw);
+%                         assignin('base', 'VUw', VUw);
+%                         assignin('base', 'dUw', dUw);
+%                         assignin('base', 'CUe', CUe);
+%                         assignin('base', 'SUe', SUe);
+%                         assignin('base', 'VUe', VUe);                     
+%                         for i = 1:length(dU)
+%                             assignin('base', 'dU', dU);
+%                             assignin('base', 'dT', dT);
+%                         end
+%                         for i = 1:length(dUm1)
+%                             assignin('base', 'dUm1', dUm1);
+%                             assignin('base', 'dTm1', dTm1);
+%                         end
+%                         for i = 1:length(Div)
+%                             assignin('base', 'Div', Div);
+%                         end
+%                         for i = 1:length(Div1)
+%                             assignin('base', 'Div1', Div1);
+%                         end
+%                         for i = 1:length(C)
+%                             assignin('base', 'C', C);
+%                         end
+%                         for i = 1:length(V)
+%                             assignin('base', 'V', V);
+%                         end
+%                         for i = 1:length(S)
+%                             assignin('base', 'S', S);
+%                         end
+                        
+                        %Delete the wait bar - we're done
+                        waitbar(1,hwait,'Finished')
+                        delete(hwait);
                         
                         %From popup function so it auto updates when run
                         popup_menu_Callback(hpopup, 1);
+                        
                     end
                 end
             end
