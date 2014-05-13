@@ -173,17 +173,16 @@ recflag = 0;
             set(hfile, 'String', 'Select a File to Proceed');
         else
             if (or(~isempty(strfind(CoronaName, FileName)),or(~isempty(strfind(SurfaceName, FileName)),~isempty(strfind(VoidName, FileName)))))
-                errordlg('File already selected for comparison','Selection Error');
-            else
-                FullPathName = strcat(PathName, FileName);
-                CoronaPath = PathName;
-                SurfacePath = PathName;
-                VoidPath = PathName;
-                set(hfile, 'String', FileName)
-                if (isempty(strfind(FileName, '.txt')))
-                    warndlg('File selected is not a supported data format','Format Warning');
-                end%if
+                warndlg('File already selected for comparison','Selection Warning');
             end
+            FullPathName = strcat(PathName, FileName);
+            CoronaPath = PathName;
+            SurfacePath = PathName;
+            VoidPath = PathName;
+            set(hfile, 'String', FileName)
+            if (isempty(strfind(FileName, '.txt')))
+                warndlg('File selected is not a supported data format','Format Warning');
+            end%if
         end%ifelse
     end %function
 
