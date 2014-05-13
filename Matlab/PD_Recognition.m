@@ -297,8 +297,8 @@ end
       case 'Delta U' % User selects Peaks.
          scatter(dUm1, dU, '.');
          title('Pulse Sequence Analysis - \DeltaU Graph');
-         xlabel('\DeltaU_{n-1} (mV)');
-         ylabel('\DeltaU_{n} (mV)');
+         xlabel('\DeltaU_{n-1} (V)');
+         ylabel('\DeltaU_{n} (V)');
          axis([-2, 2, -2, 2]);
          grid on;
       case 'Delta T' % User selects Membrane.
@@ -311,7 +311,7 @@ end
          scatter(Div1, Div, '.');
          title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
          xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
-         ylabel('\DeltaU_{n}/\DeltaT_{n} (mV)');
+         ylabel('\DeltaU_{n}/\DeltaT_{n}');
          grid on;
       case 'Voltage - Time' % User selects Peaks.
          Wave = linspace(0,1, 500);
@@ -322,7 +322,7 @@ end
          hold off
          title('Filtered Data - Voltage Time Graph');
          xlabel('Time (s)');
-         ylabel('Voltage (mV)');
+         ylabel('Voltage (V)');
          axis([0, 1, -1.2, 1]);
          grid on;
       case 'Voltage - Time 1 cycle' % User selects Peaks.
@@ -334,7 +334,7 @@ end
          hold off
          title('Filtered Data - Voltage Time Graph');
          xlabel('Time (s)');
-         ylabel('Voltage (mV)'); 
+         ylabel('Voltage (V)'); 
          v = axis;
          axis([0.02, 0.04, -1, 1]);
          grid on;
@@ -350,8 +350,8 @@ end
          scatter(VUw(:,2),VUw(:,1), '.m');
          hold off
          title('Filtered Data - Voltage Time Graph');
-         xlabel('Time (s)');
-         ylabel('Voltage (mV)'); 
+         xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
+         ylabel('\DeltaU_{n}/\DeltaT_{n}');
          legend('\DeltaU plot Features', 'Corona Features', 'Surface Features', 'Void Features', 'Location', 'SouthEast');
          grid on;
          hold off;

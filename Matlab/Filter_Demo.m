@@ -236,7 +236,7 @@ plot(Void2_Thresh, '-g');
 title('Threshold Void2 Data Set');
 xlabel('Sample Number');
 ylabel('Signal (mV)');
-legend('Wavelet Extended Data Set', 'Denoised Data Set', 'Location', 'SouthWest');
+legend('Wavelet Extended Data Set', 'Denoised Data Set','Threshold Data Set', 'Location', 'SouthWest');
 xlim([0 524288]);
 hold off
 
@@ -272,7 +272,7 @@ plot(Void2_Thresh(7000:7100), '-g');
 title('Threshold Void2 Data Set');
 xlabel('Sample Number');
 ylabel('Signal (mV)');
-legend('Wavelet Extended Data Set', 'Denoised Data Set', 'Location', 'SouthWest');
+legend('Wavelet Extended Data Set', 'Denoised Data Set','Threshold Data Set', 'Location', 'SouthWest');
 xlim([0 100]);
 hold off
 
@@ -325,11 +325,11 @@ hold on
 plot(T_C1_old, Void2_Filt,  '-r');
 plot(T_C1_old, Void2_Thresh, '-g' );
 scatter(T_V2, Void2_Peak, 'x');
-plot(Wave, SinWave, '-b');
+plot(Wave, SinWave, '-m');
 title('Peak Detect Void2 Data Set');
 xlabel('Time(ms)');
 ylabel('Signal (mV)');
-legend('Wavelet Extended Data Set', 'Denoised Data Set', 'Threshold Data Set', 'Peak Detected', 'Location', 'SouthWest');
+legend('Wavelet Extended Data Set', 'Denoised Data Set', 'Threshold Data Set', 'Peak Detected','Sine Wave', 'Location', 'SouthWest');
 xlim([390 400]);
 hold off
 
