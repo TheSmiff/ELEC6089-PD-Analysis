@@ -83,6 +83,11 @@ hauthors = uicontrol('Style','text','String','Authors: Thomas J. Smith & David M
     'HorizontalAlignment', 'left',...
     'BackgroundColor', [0.8 0.8 0.8],...
     'Position',[435,0,300,17]);
+%Time Elapsed
+htime = uicontrol('Style','text','String',' ',...
+    'HorizontalAlignment', 'left',...
+    'BackgroundColor', [0.8 0.8 0.8],...
+    'Position',[535,295,130,25]);
 
 %This means you can resize the window
 set(fig1, 'units','normalized');
@@ -102,6 +107,7 @@ set(hsurf, 'units','normalized');
 set(hopenvoid, 'units','normalized');
 set(hvoid, 'units','normalized');
 set(hauthors, 'units','normalized');
+set(htime, 'units','normalized');
 
 %To resize fonts in the window
 set(htitle, 'fontunits', 'normalized');
@@ -120,6 +126,7 @@ set(hsurf, 'fontunits', 'normalized');
 set(hopenvoid, 'fontunits', 'normalized');
 set(hvoid, 'fontunits', 'normalized');
 set(hauthors, 'fontunits', 'normalized');
+set(htime, 'fontunits', 'normalized');
 
 % Move the GUI to the center of the screen.
 movegui(fig1,'center')
@@ -165,14 +172,18 @@ recflag = 0;
             errordlg('No File Selected','File Error');
             set(hfile, 'String', 'Select a File to Proceed');
         else
-            FullPathName = strcat(PathName, FileName);
-            CoronaPath = PathName;
-            SurfacePath = PathName;
-            VoidPath = PathName;
-            set(hfile, 'String', FileName);
-            if (isempty(strfind(FileName, '.txt')))
-                warndlg('File selected is not a supported data format','Format Warning');
-            end%if
+            if (or(~isempty(strfind(CoronaName, FileName)),or(~isempty(strfind(SurfaceName, FileName)),~isempty(strfind(VoidName, FileName)))))
+                errordlg('File already selected for comparison','Selection Error');
+            else
+                FullPathName = strcat(PathName, FileName);
+                CoronaPath = PathName;
+                SurfacePath = PathName;
+                VoidPath = PathName;
+                set(hfile, 'String', FileName)
+                if (isempty(strfind(FileName, '.txt')))
+                    warndlg('File selected is not a supported data format','Format Warning');
+                end%if
+            end
         end%ifelse
     end %function
 
@@ -181,12 +192,18 @@ recflag = 0;
         [CoronaName,CoronaPath] = uigetfile({'*.txt'},'Select the Partial Discharge Data file for analysis');
         if isequal(CoronaName,0)
             errordlg('No File Selected','File Error');
-            set(hcor, 'String', 'Select a File to Proceed');
         else
-            set(hcor, 'String', CoronaName);
-            if (isempty(strfind(CoronaName, '.txt')))
-                warndlg('File selected is not a supported data format','Format Warning');
-            end%if
+            if (~isempty(strfind(CoronaName, FileName)))
+                errordlg('File cannot be the same as unknown file','Selection Error');
+            else
+                if (isempty(strfind(CoronaName, 'Corona')))
+                    warndlg('Check this file contains Corona data','File Warning');
+                end
+                set(hcor, 'String', CoronaName);
+                if (isempty(strfind(CoronaName, '.txt')))
+                    warndlg('File selected is not a supported data format','Format Warning');
+                end%if
+            end
         end%ifelse
     end %function
 
@@ -195,11 +212,17 @@ recflag = 0;
         [SurfaceName,SurfacePath] = uigetfile({'*.txt'},'Select the Partial Discharge Data file for analysis');
         if isequal(SurfaceName,0)
             errordlg('No File Selected','File Error');
-            set(hsurf, 'String', 'Select a File to Proceed');
         else
-            set(hsurf, 'String', SurfaceName);
-            if (isempty(strfind(SurfaceName, '.txt')))
-                warndlg('File selected is not a supported data format','Format Warning');
+            if (~isempty(strfind(SurfaceName, FileName)))
+                errordlg('File cannot be the same as unknown file','Selection Error');
+            else
+                if (isempty(strfind(SurfaceName, 'Surface')))
+                    warndlg('Check this file contains Surface data','File Warning');
+                end
+                set(hsurf, 'String', SurfaceName);
+                if (isempty(strfind(SurfaceName, '.txt')))
+                    warndlg('File selected is not a supported data format','Format Warning');
+                end
             end
         end%ifelse
     end %function
@@ -209,12 +232,18 @@ recflag = 0;
         [VoidName,VoidPath] = uigetfile({'*.txt'},'Select the Partial Discharge Data file for analysis');
         if isequal(VoidName,0)
             errordlg('No File Selected','File Error');
-            set(hvoid, 'String', 'Select a File to Proceed');
         else
-            set(hvoid, 'String', VoidName);
-            if (isempty(strfind(VoidName, '.txt')))
-                warndlg('File selected is not a supported data format','Format Warning');
-            end%if
+            if (~isempty(strfind(VoidName, FileName)))
+                errordlg('File cannot be the same as unknown file','Selection Error');
+            else
+                if (isempty(strfind(VoidName, 'Void')))
+                    warndlg('Check this file contains Void data','File Warning');
+                end
+                set(hvoid, 'String', VoidName);
+                if (isempty(strfind(VoidName, '.txt')))
+                    warndlg('File selected is not a supported data format','Format Warning');
+                end%if
+            end
         end%ifelse
     end %function
 
@@ -225,6 +254,7 @@ function runbtn_Callback(source, eventdata)
         set(hfile, 'String', 'Select a File to Proceed');
     else
         %Since it is not recognition
+        tStart = tic;
         recflag = 0;
         set(hrectext, 'String', '');
         %Just normal PSA
@@ -250,6 +280,8 @@ function runbtn_Callback(source, eventdata)
         %         end
         %From popup function so it auto updates when run
         popup_menu_Callback(hpopup, 1);
+        tElapsed = toc(tStart);
+        set(htime, 'String', ['Calculation Time: ', num2str(tElapsed, '%3.1f'), 's']);
     end
 end
 
@@ -312,11 +344,11 @@ end
          if(~isequal(recflag,1))
                errordlg('Not available without running recognition','Program Error');
          else
-         scatter(dUw(:,1),dUw(:,2), '.b');
+         scatter(dUw(:,2),dUw(:,1), '.b');
          hold on
-         scatter(CUw(:,1),CUw(:,2), '.r');
-         scatter(SUw(:,1),SUw(:,2), '.g');
-         scatter(VUw(:,1),VUw(:,2), '.m');
+         scatter(CUw(:,2),CUw(:,1), '.r');
+         scatter(SUw(:,2),SUw(:,1), '.g');
+         scatter(VUw(:,2),VUw(:,1), '.m');
          hold off
          title('Filtered Data - Voltage Time Graph');
          xlabel('Time (s)');
@@ -361,6 +393,8 @@ end
             
 % --- Executes on button press in hrec
     function recbtn_Callback(source, eventdata)
+        %Start Timer
+        tStart = tic;
         %Check all four files are selected as required
         if isequal(CoronaName,0)
             errordlg('No Corona File Selected - select a file for analysis','File Error');
@@ -524,6 +558,9 @@ end
                         
                         %From popup function so it auto updates when run
                         popup_menu_Callback(hpopup, 1);
+                        
+                        tElapsed = toc(tStart);
+                        set(htime, 'String', ['Calculation Time: ', num2str(tElapsed, '%3.1f'), 's']);
                         
                     end
                 end
