@@ -22,20 +22,20 @@ function [dU,dUm1,dT,dTm1,Div,Div1, T, U] = PSA(FilePathName)
         clear If;
         
         %Filter the Variables to find the PD peaks
-        PD_Threshold = 0.1;
-        It = transpose(zeros(1, length(I)));
-        for i = 1:length(It)
-            if(gt(abs(I(i)),PD_Threshold))
-                It(i) = I(i);
-            end
-        end
-        I = It;
-        clear It;
+%         PD_Threshold = 0;
+%         It = transpose(zeros(1, length(I)));
+%         for i = 1:length(It)
+%             if(gt(abs(I(i)),PD_Threshold))
+%                 It(i) = I(i);
+%             end
+%         end
+%         I = It;
+%         clear It;
         
-        [I,locs] = findpeaks(I, 'MINPEAKDISTANCE', 20);
+        [I,locs] = findpeaks(I, 'MINPEAKDISTANCE',50, 'THRESHOLD', 0.05, 'MINPEAKHEIGHT', 0.05);
         T = T(locs);
         %I = I(I>PD_Threshold);
-        T = T(I>PD_Threshold);
+        %T = T(I>PD_Threshold);
         
         U = sind((rem(T,0.02)*360)/0.02);        
         

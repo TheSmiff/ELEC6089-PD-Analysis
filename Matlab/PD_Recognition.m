@@ -270,13 +270,10 @@ function runbtn_Callback(source, eventdata)
         %         for i = 1:length(Div)
         %             assignin('base', 'Div', Div);
         %         end
-        %         for i = 1:length(Div1)
-        %             assignin('base', 'Div1', Div1);
-        %         end
-        %         for i = 1:length(U)
-        %             assignin('base', 'U', U);
-        %             assignin('base', 'T', T);
-        %         end
+                for i = 1:length(U)
+                    assignin('base', 'U', U);
+                    assignin('base', 'T', T);
+                end
         %From popup function so it auto updates when run
         popup_menu_Callback(hpopup, 1);
         tElapsed = toc(tStart);
@@ -382,8 +379,8 @@ end
          %set(hb1, 'XTickLabel','Corona');
          %set(hb2, 'XTickLabel','Surface');
          %set(hb3, 'XTickLabel','Void');
-         title('Sum standardized euclidean distance between each feature');
-         ylabel('Sum se distance');
+         title('Sum euclidean distance between each feature set');
+         ylabel('Sum E distance');
          xlabel('Lowest bar indicates class');
          hold off;
          end
@@ -449,7 +446,7 @@ end
                         CUnet = configure(CUnet,CUmat);
                         %Set the training length (15 found to be about
                         %right from experimentation)
-                        CUnet.trainParam.epochs = 15;
+                        CUnet.trainParam.epochs = 10;
                         %Don't show the window - it spoils the professional
                         %feel
                         CUnet.trainParam.showWindow = false;
@@ -465,7 +462,7 @@ end
                         drawnow();
                         SUnet = competlayer(20,.1);
                         SUnet = configure(SUnet,SUmat);
-                        SUnet.trainParam.epochs = 15;
+                        SUnet.trainParam.epochs = 10;
                         SUnet.trainParam.showWindow = false;
                         SUnet = train(SUnet,SUmat);
                         SUw = SUnet.IW{1};
@@ -476,7 +473,7 @@ end
                         drawnow();
                         VUnet = competlayer(20,.1);
                         VUnet = configure(VUnet,VUmat);
-                        VUnet.trainParam.epochs = 15;
+                        VUnet.trainParam.epochs = 10;
                         VUnet.trainParam.showWindow = false;
                         VUnet = train(VUnet,VUmat);
                         VUw = VUnet.IW{1};
@@ -487,7 +484,7 @@ end
                         drawnow();
                         dUnet = competlayer(20,.1);
                         dUnet = configure(dUnet,dUmat);
-                        dUnet.trainParam.epochs = 15;
+                        dUnet.trainParam.epochs = 10;
                         dUnet.trainParam.showWindow = false;
                         dUnet = train(dUnet,dUmat);
                         dUw = dUnet.IW{1};
