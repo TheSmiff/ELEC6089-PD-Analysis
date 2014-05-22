@@ -21,6 +21,83 @@ Corona1 = importdata('../Known Data/Corona1.txt');
 Void2 = importdata('../Known Data/Void2.txt');
 Surface2 = importdata('../Known Data/Surface2.txt');
 
+[~, ~, ~, ~, Div, Div1, ~, ~, ~, ~]= PSA('../Known Data/Void2.txt');
+dUmat = [transpose(Div); transpose(Div1)];
+
+figure(31);
+scatter(Div1, Div, '.b');
+title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
+xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
+ylabel('\DeltaU_{n}/\DeltaT_{n}');
+grid on;
+
+dUnet = competlayer(20,.1);
+dUnet = configure(dUnet,dUmat);
+dUnet.trainParam.epochs = 0;
+dUnet = train(dUnet,dUmat);
+dUw = dUnet.IW{1};
+
+tmp1 = dUw(:,2);
+tmp2 = dUw(:,1);
+figure(32);
+scatter(Div1, Div, '.b');
+hold on
+scatter(tmp1,tmp2, '.r');
+title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
+xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
+ylabel('\DeltaU_{n}/\DeltaT_{n}');
+grid on;
+hold off
+
+dUnet = competlayer(20,.1);
+dUnet = configure(dUnet,dUmat);
+dUnet.trainParam.epochs = 1;
+dUnet = train(dUnet,dUmat);
+dUw = dUnet.IW{1};
+
+tmp3 = dUw(:,2);
+tmp4 = dUw(:,1);
+figure(33);
+scatter(Div1, Div, '.b');
+hold on
+scatter(tmp1,tmp2, '.r');
+scatter(tmp3,tmp4, '.g');
+title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
+xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
+ylabel('\DeltaU_{n}/\DeltaT_{n}');
+grid on;
+hold off
+
+dUnet = competlayer(20,.1);
+dUnet = configure(dUnet,dUmat);
+dUnet.trainParam.epochs = 10;
+dUnet = train(dUnet,dUmat);
+dUw = dUnet.IW{1};
+
+tmp5 = dUw(:,2);
+tmp6 = dUw(:,1);
+figure(34);
+scatter(Div1, Div, '.b');
+hold on
+scatter(tmp1,tmp2, '.r');
+%scatter(tmp3,tmp4, '.g');
+scatter(tmp5,tmp6, '.m');
+title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
+xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
+ylabel('\DeltaU_{n}/\DeltaT_{n}');
+grid on;
+hold off
+
+figure(35);
+hold on
+scatter(tmp5,tmp6, '.m', 'LineWidth', 1.0);
+title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
+xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
+ylabel('\DeltaU_{n}/\DeltaT_{n}');
+grid on;
+hold off
+
+
 %Extend Function to next power of 2
 n = 524288 - length(Corona1);
 Corona1_Ext = wextend(1, 'sym', Corona1, n, 'r');
@@ -29,7 +106,7 @@ Void2_Ext = wextend(1, 'sym', Void2, n, 'r');
 n = 524288 - length(Surface2);
 Surface2_Ext = wextend(1, 'sym', Surface2, n, 'r');
 
-figure(21);
+figure(1);
 plot(Void2, '-b');
 hold on
 Wave = linspace(0,500002, 1000);
@@ -176,118 +253,6 @@ legend('Wavelet Extended Data Set', 'Denoised Data Set', 'Location', 'SouthEast'
 xlim([0 100]);
 hold off
 
-
-% Threshold Generation
-% PD_Threshold = 0.1;
-% x = linspace(0,1,1000);
-% k = ones(1,1000);
-% for i = 1:length(x)
-%     if(x(i) < PD_Threshold)
-%         k(i) = 0;
-%     end
-% end
-% figure(11);
-% plot(x, k);
-% title('Threshold Filter');
-% xlabel('Sample Number');
-% ylabel('Signal');
-% xlim([0 1]);
-
-
-%Threshold Data
-
-% Corona1_Thresh = transpose(zeros(1, length(Corona1_Filt)));
-% for i = 1:length(Corona1_Filt)
-%     if(gt(abs(Corona1_Filt(i)),PD_Threshold))
-%         Corona1_Thresh(i) = Corona1_Filt(i);
-%     end
-% end
-% Void2_Thresh = transpose(zeros(1, length(Void2_Filt)));
-% for i = 1:length(Void2_Filt)
-%     if(gt(abs(Void2_Filt(i)),PD_Threshold))
-%         Void2_Thresh(i) = Void2_Filt(i);
-%     end
-% end
-% 
-% Surface2_Thresh = transpose(zeros(1, length(Surface2_Filt)));
-% for i = 1:length(Surface2_Filt)
-%     if(gt(abs(Surface2_Filt(i)),PD_Threshold))
-%         Surface2_Thresh(i) = Surface2_Filt(i);
-%     end
-% end
-
-% figure(12);
-% plot(Corona1_Ext);
-% hold on
-% plot(Corona1_Filt, '-r');
-% plot(Corona1_Thresh, '-g');
-% title('Threshold Corona1 Data Set');
-% xlabel('Sample Number');
-% ylabel('Signal (mV)');
-% legend('Wavelet Extended Data Set', 'Denoised Data Set', 'Threhsold Data Set', 'Location', 'SouthWest');
-% xlim([0 524288]);
-% hold off
-% 
-% figure(13);
-% plot(Void2_Ext);
-% hold on
-% plot(Void2_Filt, '-r');
-% plot(Void2_Thresh, '-g');
-% title('Threshold Void2 Data Set');
-% xlabel('Sample Number');
-% ylabel('Signal (mV)');
-% legend('Wavelet Extended Data Set', 'Denoised Data Set','Threshold Data Set', 'Location', 'SouthWest');
-% xlim([0 524288]);
-% hold off
-% 
-% figure(14);
-% plot(Surface2_Ext);
-% hold on
-% plot(Surface2_Filt, '-r');
-% plot(Surface2_Thresh, '-g');
-% title('Threshold Surface2 Data Set');
-% xlabel('Sample Number');
-% ylabel('Signal (mV)');
-% legend('Wavelet Extended Data Set', 'Denoised Data Set', 'Location', 'SouthWest');
-% xlim([0 524288]);
-% hold off
-% 
-% figure(15);
-% plot(Corona1_Ext(7050:7150));
-% hold on
-% plot(Corona1_Filt(7050:7150), '-r');
-% plot(Corona1_Thresh(7050:7150), '-g');
-% title('Threshold Corona1 Data Set');
-% xlabel('Sample Number');
-% ylabel('Signal (mV)');
-% legend('Wavelet Extended Data Set', 'Denoised Data Set', 'Threshold Data Set', 'Location', 'NorthWest');
-% xlim([0 100]);
-% hold off
-% 
-% figure(16);
-% plot(Void2_Ext(7000:7100));
-% hold on
-% plot(Void2_Filt(7000:7100), '-r');
-% plot(Void2_Thresh(7000:7100), '-g');
-% title('Threshold Void2 Data Set');
-% xlabel('Sample Number');
-% ylabel('Signal (mV)');
-% legend('Wavelet Extended Data Set', 'Denoised Data Set','Threshold Data Set', 'Location', 'SouthWest');
-% xlim([0 100]);
-% hold off
-% 
-% figure(17);
-% plot(Surface2_Ext(7000:7100));
-% hold on
-% plot(Surface2_Filt(7000:7100), '-r');
-% plot(Surface2_Thresh(7000:7100), '-g');
-% title('Threshold Surface2 Data Set');
-% xlabel('Sample Number');
-% ylabel('Signal (mV)');
-% legend('Wavelet Extended Data Set', 'Denoised Data Set', 'Location', 'SouthEast');
-% xlim([0 100]);
-% hold off
-
 %Generate Time Stamping
 T_C1 = transpose(linspace(0, 1000, 524288));
 T_V2 = transpose(linspace(0, 1000, 524288));
@@ -346,5 +311,6 @@ ylabel('Signal (mV)');
 legend('Wavelet Extended Data Set', 'Denoised Data Set', 'Threshold Data Set', 'Peak Detected', 'Location', 'SouthWest');
 %xlim([107 111]);
 hold off
+
 
 
