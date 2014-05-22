@@ -1,14 +1,12 @@
-function [dU,dUm1,dT,dTm1,Div,Div1, T, U] = PSA(FilePathName)
+function [dU,dUm1,dT,dTm1,Div,Div1, T, U, I, If] = PSA(FilePathName)
        %Zero all variables in case of repeated PSA
        clear dU dT dUm1 dTm1 Div Div1 T I If n U; 
 
         %Import the voltage file (assumed mV following discussion during
         %lecture on 06/05/2014)
         I = importdata(FilePathName);
-        %Evenly distribute the time - we know it is 1 second
+        %Evenly distribute the time - we know it is 1 second length
         T = transpose(linspace(0,1,length(I)));
-        %Generate a 50Hz normalised sine wave throughout the wave
-        %Sin = sind(T);
         
         % --- Filtering
         %Extend U to next power of two length for wavelet transform
@@ -18,24 +16,13 @@ function [dU,dUm1,dT,dTm1,Div,Div1, T, U] = PSA(FilePathName)
         If = wden(If, 'sqtwolog', 'h', 'mln', 8, 'sym6');
         %Unextend it and free up memory
         n = length(I);
-        I = If(1:n);
-        clear If;
+        %return the filtered data to the program for plotting
+        If = If(1:n);
         
-        %Filter the Variables to find the PD peaks
-%         PD_Threshold = 0;
-%         It = transpose(zeros(1, length(I)));
-%         for i = 1:length(It)
-%             if(gt(abs(I(i)),PD_Threshold))
-%                 It(i) = I(i);
-%             end
-%         end
-%         I = It;
-%         clear It;
-        
-        [I,locs] = findpeaks(I, 'MINPEAKDISTANCE',50, 'THRESHOLD', 0.05, 'MINPEAKHEIGHT', 0.05);
+        %I is a set of peaks
+        [I,locs] = findpeaks(If, 'MINPEAKDISTANCE',50,...
+            'THRESHOLD', 0.05, 'MINPEAKHEIGHT', 0.05);
         T = T(locs);
-        %I = I(I>PD_Threshold);
-        %T = T(I>PD_Threshold);
         
         U = sind((rem(T,0.02)*360)/0.02);        
         

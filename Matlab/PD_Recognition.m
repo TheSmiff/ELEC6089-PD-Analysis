@@ -7,18 +7,16 @@ fig1 = figure('Visible','off','Position',[100,100,660,485], 'name',...
     'Partial Discharge Characterization Tool - T.Smith & D.Mahmoodi',...
     'NumberTitle', 'off', 'Resize', 'on', 'units','normalized');
 
-%movegui(fig1,'center') 
-
 % ---  Construct the components.
 
 %Title decleration
 htitle = uicontrol('Style','text','String',...
     'Partial Discharge Characterisation Tool',...
-    'Position',[0,450,420,30], 'FontSize', 18,...
+    'Position',[10,450,420,30], 'FontSize', 18,...
     'HorizontalAlignment', 'left',...
     'BackgroundColor', [0.8 0.8 0.8]);
 %UoS Logo
-hlogo = axes('Units','Pixels','Position',[440,340,200,185]);
+hlogo = axes('Units','Pixels','Position',[550,410,100,92.5]);
 imshow('uoslogogrey.jpg');
 %Open Button
 hopen = uicontrol('Style','pushbutton','String','Open File',...
@@ -128,6 +126,17 @@ set(hvoid, 'fontunits', 'normalized');
 set(hauthors, 'fontunits', 'normalized');
 set(htime, 'fontunits', 'normalized');
 
+
+cmenu = uicontextmenu('Parent',fig1,'Position',[10 215]);
+mh1 = uimenu(cmenu,'Label','Item 1');
+mh2 = uimenu(cmenu,'Label','Item 2');
+mh3 = uimenu(cmenu,'Label','Item 3');
+cmenuhandles = findall(fig1,'type','uicontextmenu');
+set(cmenuhandles,'HandleVisibility','off')
+menuitemhandles = findall(cmenuhandles,'type','uimenu');
+set(menuitemhandles,'HandleVisibility','off')
+set(ha,'UIContextMenu',cmenu); 
+
 % Move the GUI to the center of the screen.
 movegui(fig1,'center')
 
@@ -164,13 +173,20 @@ VUe = 0;
 SUe = 0;
 Class = 0;
 recflag = 0;
+I = 0;
+F = 0;
 
 % --- Executes on button press in hopen.
     function openbtn_Callback(source,eventdata)
+        clear tmpf tmpp;
+        tmpf = FileName;
+        tmpp = PathName;
         [FileName,PathName] = uigetfile({'*.txt'},'Select the Partial Discharge Data file for analysis');
         if isequal(FileName,0)
             errordlg('No File Selected','File Error');
-            set(hfile, 'String', 'Select a File to Proceed');
+            FileName = tmpf;
+            PathName = tmpp;
+            set(hfile, 'String', tmpf);
         else
             if (or(~isempty(strfind(CoronaName, FileName)),or(~isempty(strfind(SurfaceName, FileName)),~isempty(strfind(VoidName, FileName)))))
                 warndlg('File already selected for comparison','Selection Warning');
@@ -188,9 +204,15 @@ recflag = 0;
 
 % --- Executes on button press in hopen.
     function opencorbtn_Callback(source,eventdata)
+        clear tmpf tmpp;
+        tmpf = CoronaName;
+        tmpp = CoronaPath;
         [CoronaName,CoronaPath] = uigetfile({'*.txt'},'Select the Partial Discharge Data file for analysis');
         if isequal(CoronaName,0)
             errordlg('No File Selected','File Error');
+            CoronaName = tmpf;
+            CoronaPath = tmpp;
+            set(hcor, 'String', tmpf);
         else
             if (~isempty(strfind(CoronaName, FileName)))
                 errordlg('File cannot be the same as unknown file','Selection Error');
@@ -208,9 +230,15 @@ recflag = 0;
 
 % --- Executes on button press in hopen.
     function opensurfbtn_Callback(source,eventdata)
+        clear tmpf tmpp;
+        tmpf = SurfaceName;
+        tmpp = SurfacePath;
         [SurfaceName,SurfacePath] = uigetfile({'*.txt'},'Select the Partial Discharge Data file for analysis');
         if isequal(SurfaceName,0)
             errordlg('No File Selected','File Error');
+            SurfaceName = tmpf;
+            SurfacePath = tmpp;
+            set(hsurf, 'String', tmpf);
         else
             if (~isempty(strfind(SurfaceName, FileName)))
                 errordlg('File cannot be the same as unknown file','Selection Error');
@@ -228,9 +256,15 @@ recflag = 0;
 
 % --- Executes on button press in hopen.
     function openvoidbtn_Callback(source,eventdata)
+        clear tmpf tmpp;
+        tmpf = VoidName;
+        tmpp = VoidPath;
         [VoidName,VoidPath] = uigetfile({'*.txt'},'Select the Partial Discharge Data file for analysis');
         if isequal(VoidName,0)
             errordlg('No File Selected','File Error');
+            VoidName = tmpf;
+            VoidPath = tmpp;
+            set(hvoid, 'String', tmpf);
         else
             if (~isempty(strfind(VoidName, FileName)))
                 errordlg('File cannot be the same as unknown file','Selection Error');
@@ -257,7 +291,7 @@ function runbtn_Callback(source, eventdata)
         recflag = 0;
         set(hrectext, 'String', '');
         %Just normal PSA
-        [dU, dUm1, dT, dTm1, Div, Div1, T, U]= PSA(FullPathName);
+        [dU, dUm1, dT, dTm1, Div, Div1, T, U, I, F]= PSA(FullPathName);
         %Dump variables to workspace - debug
         %         for i = 1:length(dU)
         %             assignin('base', 'dU', dU);
@@ -311,29 +345,34 @@ end
          ylabel('\DeltaU_{n}/\DeltaT_{n}');
          grid on;
       case 'Voltage - Time' % User selects Peaks.
-         Wave = linspace(0,1, 500);
-         SinWave = (sind((rem(Wave,0.02)*360)/0.02)*0.1)-1.1;
-         stem(T, U, '.', 'MarkerSize',0.1);
+         Wave = linspace(0,1, 5000);
+         SinWave = (sind((rem(Wave,0.02)*360)/0.02));
+         scatter(T, I, 'xm'); 
          hold on
+         plot(transpose(linspace(0,1,length(F))), F, '-b');
          plot(Wave, SinWave, '-r');
          hold off
          title('Filtered Data - Voltage Time Graph');
          xlabel('Time (s)');
          ylabel('Voltage (V)');
-         axis([0, 1, -1.2, 1]);
          grid on;
       case 'Voltage - Time 1 cycle' % User selects Peaks.
-         Wave = linspace(0,1, 1000);
+         Wave = linspace(0.02,0.04, 300);
          SinWave = sind((rem(Wave,0.02)*360)/0.02);
-         stem(T, U, '.', 'MarkerSize',0.1);
+         clear tmp1 tmp2;
+         tmp1 = T(T>0.02);
+         tmp2 = I(T>0.02);
+         tmp2 = tmp2(tmp1<0.04);
+         tmp1 = tmp1(tmp1<0.04);        
+         scatter(tmp1, tmp2, 'xm');
          hold on
+         plot(transpose(linspace(0.02,0.04,length(F(10000:20000)))), F(10000:20000), '-b');
          plot(Wave, SinWave, '-r');
          hold off
          title('Filtered Data - Voltage Time Graph');
          xlabel('Time (s)');
          ylabel('Voltage (V)'); 
          v = axis;
-         axis([0.02, 0.04, -1, 1]);
          grid on;
          hold off;
      case 'Classification by dU/dT' % User selects Peaks.
@@ -380,7 +419,7 @@ end
          %set(hb2, 'XTickLabel','Surface');
          %set(hb3, 'XTickLabel','Void');
          title('Sum euclidean distance between each feature set');
-         ylabel('Sum E distance');
+         ylabel('Sum E Distance');
          xlabel('Lowest bar indicates class');
          hold off;
          end
@@ -420,13 +459,13 @@ end
                         clear CdU SdU VdU CdT SdT SdV maxU dUpad dTpad Class
                         
                         %Perform PSA on the four selected samples
-                        [C.dU, C.dUm1, C.dT, C.dTm1, C.Div, C.Div1, ~, ~] = PSA(strcat(CoronaPath, CoronaName));
+                        [C.dU, C.dUm1, C.dT, C.dTm1, C.Div, C.Div1, ~, ~, ~, ~] = PSA(strcat(CoronaPath, CoronaName));
                         waitbar(0.03,hwait, 'Surface PSA')
-                        [S.dU, S.dUm1, S.dT, S.dTm1, S.Div, S.Div1, ~, ~] = PSA(strcat(SurfacePath, SurfaceName));
+                        [S.dU, S.dUm1, S.dT, S.dTm1, S.Div, S.Div1, ~, ~, ~, ~] = PSA(strcat(SurfacePath, SurfaceName));
                         waitbar(0.06,hwait,'Void PSA')
-                        [V.dU, V.dUm1, V.dT, V.dTm1, V.Div, V.Div1, ~, ~] = PSA(strcat(VoidPath, VoidName));
+                        [V.dU, V.dUm1, V.dT, V.dTm1, V.Div, V.Div1, ~, ~, ~, ~] = PSA(strcat(VoidPath, VoidName));
                         waitbar(0.09,hwait,'Unknown PSA')
-                        [dU, dUm1, dT, dTm1, Div, Div1, T, U]= PSA(FullPathName);
+                        [dU, dUm1, dT, dTm1, Div, Div1, T, U, I, F]= PSA(FullPathName);
                         
                         %Produce a 2xn matrix with the Div values in the
                         %top row and the Div1 values in the other.
