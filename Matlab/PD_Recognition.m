@@ -128,9 +128,15 @@ set(htime, 'fontunits', 'normalized');
 
 
 cmenu = uicontextmenu('Parent',fig1,'Position',[10 215]);
-mh1 = uimenu(cmenu,'Label','Item 1');
-mh2 = uimenu(cmenu,'Label','Item 2');
-mh3 = uimenu(cmenu,'Label','Item 3');
+mh1 = uimenu(cmenu,'Label','Open in New Window',...
+    'Accelerator','W',...
+    'Callback',{@uimenu_window});
+mh2 = uimenu(cmenu,'Label','Save Figure',...
+    'Accelerator','S',...
+    'Callback',{@uimenu_save});
+mh3 = uimenu(cmenu,'Label','Reset View',...
+    'Accelerator','R',...
+    'Callback',{@uimenu_reset});
 cmenuhandles = findall(fig1,'type','uicontextmenu');
 set(cmenuhandles,'HandleVisibility','off')
 menuitemhandles = findall(cmenuhandles,'type','uimenu');
@@ -139,10 +145,8 @@ set(ha,'UIContextMenu',cmenu);
 
 % Move the GUI to the center of the screen.
 movegui(fig1,'center')
-
 % Make the GUI visible.
 set(fig1,'Visible','on');
-
 
 % --- Define Global Variables
 FileName = 0;
@@ -602,6 +606,39 @@ end
             end
         end
     end
+
+% --- Executes on button press in hopen.
+    function uimenu_reset(source,eventdata)
+        if(isequal(recflag, 1))
+            popup_menu_Callback(hpopup, 1);
+        end
+    end %function
+
+% --- Executes on button press in hopen.
+    function uimenu_save(source,eventdata)
+
+    end %function
+
+% --- Executes on button press in hopen.
+    function uimenu_window(source,eventdata)
+fig2 = figure('Visible','off','Position',[100,100,600,485], 'name',...
+            'Partial Discharge Characterization Tool - T.Smith & D.Mahmoodi',...
+            'NumberTitle', 'off', 'Resize', 'on', 'units','normalized');
+        % Move the GUI to the center of the screen.
+        movegui(fig2,'center')
+        % Make the GUI visible.
+        set(fig2,'Visible','on');
+        h2 = axes('Units','Pixels','Position',[65,50,500,390]);
+        hold on
+        copyobj(get(ha,'children'),h2);
+        grid on;
+        xlabel(get(get(ha,'xlabel'),'string'));
+        ylabel(get(get(ha,'ylabel'),'string'));
+        title(get(get(ha,'title'),'string'));
+        set(h2, 'units','normalized');
+        hold off
+        
+    end %function
 
     
         
