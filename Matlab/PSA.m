@@ -20,8 +20,8 @@ function [dU,dUm1,dT,dTm1,Div,Div1, T, U, I, If] = PSA(FilePathName)
         If = If(1:n);
         
         %I is a set of peaks
-        [I,locs] = findpeaks(If, 'MINPEAKDISTANCE',30,...
-            'THRESHOLD', 0.01, 'MINPEAKHEIGHT', 0.05);
+        [I,locs] = findpeaks(If, 'MINPEAKDISTANCE',50,...
+            'THRESHOLD', 0.0, 'MINPEAKHEIGHT', 0.1);
         T = T(locs);
         
         U = sind((rem(T,0.02)*360)/0.02);        

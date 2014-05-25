@@ -43,7 +43,7 @@ hfile = uicontrol('Style','text','String','Select a File to Proceed',...
 %Drop Down Menu
 hpopup = uicontrol('Style','popupmenu',...
     'String',{'Delta U','Delta T','Delta U & Delta T','Voltage - Time',...
-    'Voltage - Time 1 cycle','Classification by dU/dT','Class Probability'},...
+    'Voltage - Time 1 cycle','Feature Comparison \DeltaU/\DeltaT','Classification'},...
     'Position',[425,250,200,25],...
     'Callback',{@popup_menu_Callback});
 %Axes
@@ -379,7 +379,7 @@ end
          v = axis;
          grid on;
          hold off;
-     case 'Classification by dU/dT' % User selects Peaks.
+     case 'Feature Comparison dU/dT' % User selects Peaks.
          if(~isequal(recflag,1))
                errordlg('Not available without running recognition','Program Error');
          else
@@ -389,14 +389,14 @@ end
          scatter(SUw(:,2),SUw(:,1), '.g');
          scatter(VUw(:,2),VUw(:,1), '.m');
          hold off
-         title('Filtered Data - Voltage Time Graph');
+         title('Features Extracted by Competitive Neural Network - \DeltaU/\DeltaT Graph');
          xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
          ylabel('\DeltaU_{n}/\DeltaT_{n}');
          legend('\DeltaU plot Features', 'Corona Features', 'Surface Features', 'Void Features', 'Location', 'SouthEast');
          grid on;
          hold off;
          end
-       case 'Class Probability' % User selects Peaks.
+       case 'Classification' % User selects Peaks.
          if(~isequal(recflag,1))
                errordlg('Not available without running recognition','Program Error');
          else
