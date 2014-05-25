@@ -27,8 +27,8 @@ function [dU,dUm1,dT,dTm1,Div,Div1, T, U, I, If] = PSA(FilePathName)
         U = sind((rem(T,0.02)*360)/0.02);        
         
         %Preallocate variable lengths for speed
-        dU = zeros(length(U),1);
-        dT = zeros(length(U),1);
+        dU = zeros(length(U)-1,1);
+        dT = zeros(length(T)-1,1);
         %dU(n) = U(n+1) - U(n)
         %dT(n) = T(n+1) - T(n)
         %Generate the delta variables
@@ -38,8 +38,8 @@ function [dU,dUm1,dT,dTm1,Div,Div1, T, U, I, If] = PSA(FilePathName)
         end
         
         %Preallocate variable length for speed
-        dUm1 = zeros(length(U)+1,1);
-        dTm1 = zeros(length(U)+1,1);
+        dUm1 = zeros(length(U)-1,1);
+        dTm1 = zeros(length(T)-1,1);
         %dU(n-1) = U(n) - U(n-1)
         %Generate the -1 variables
         for i = 2:length(U) %start at 2 as U0 is not an index
@@ -56,6 +56,9 @@ function [dU,dUm1,dT,dTm1,Div,Div1, T, U, I, If] = PSA(FilePathName)
         %Delete vector 1 of the n values to keep offset
         dU(1) = [];
         dT(1) = [];
+        %Also need to delete ends to make same length vectors
+        %dU(length(dU)) = [];
+        %dT(length(dT)) = [];
         
         %preallocate array length for speed
         Div = zeros(length(dU),1);

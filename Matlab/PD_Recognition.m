@@ -297,17 +297,17 @@ function runbtn_Callback(source, eventdata)
         %Just normal PSA
         [dU, dUm1, dT, dTm1, Div, Div1, T, U, I, F]= PSA(FullPathName);
         %Dump variables to workspace - debug
-        %         for i = 1:length(dU)
-        %             assignin('base', 'dU', dU);
-        %             assignin('base', 'dT', dT);
-        %         end
-        %         for i = 1:length(dUm1)
-        %             assignin('base', 'dUm1', dUm1);
-        %             assignin('base', 'dTm1', dTm1);
-        %         end
-        %         for i = 1:length(Div)
-        %             assignin('base', 'Div', Div);
-        %         end
+                for i = 1:length(dU)
+                    assignin('base', 'dU', dU);
+                    assignin('base', 'dT', dT);
+                end
+                for i = 1:length(dUm1)
+                    assignin('base', 'dUm1', dUm1);
+                    assignin('base', 'dTm1', dTm1);
+                end
+                for i = 1:length(Div)
+                    assignin('base', 'Div', Div);
+                end
                 for i = 1:length(U)
                     assignin('base', 'U', U);
                     assignin('base', 'T', T);
@@ -556,40 +556,40 @@ end
                         set(hrectext, 'String', Class);
                         
                         %Output variables to the workspace where required
-%                         assignin('base', 'CUmat', CUmat);
-%                         assignin('base', 'SUmat', SUmat);
-%                         assignin('base', 'VUmat', VUmat);
-%                         assignin('base', 'dUmat', dUmat);
-%                         assignin('base', 'CUw', CUw);
-%                         assignin('base', 'SUw', SUw);
-%                         assignin('base', 'VUw', VUw);
-%                         assignin('base', 'dUw', dUw);
-%                         assignin('base', 'CUe', CUe);
-%                         assignin('base', 'SUe', SUe);
-%                         assignin('base', 'VUe', VUe);                     
-%                         for i = 1:length(dU)
-%                             assignin('base', 'dU', dU);
-%                             assignin('base', 'dT', dT);
-%                         end
-%                         for i = 1:length(dUm1)
-%                             assignin('base', 'dUm1', dUm1);
-%                             assignin('base', 'dTm1', dTm1);
-%                         end
-%                         for i = 1:length(Div)
-%                             assignin('base', 'Div', Div);
-%                         end
-%                         for i = 1:length(Div1)
-%                             assignin('base', 'Div1', Div1);
-%                         end
-%                         for i = 1:length(C)
-%                             assignin('base', 'C', C);
-%                         end
-%                         for i = 1:length(V)
-%                             assignin('base', 'V', V);
-%                         end
-%                         for i = 1:length(S)
-%                             assignin('base', 'S', S);
-%                         end
+                        assignin('base', 'CUmat', CUmat);
+                        assignin('base', 'SUmat', SUmat);
+                        assignin('base', 'VUmat', VUmat);
+                        assignin('base', 'dUmat', dUmat);
+                        assignin('base', 'CUw', CUw);
+                        assignin('base', 'SUw', SUw);
+                        assignin('base', 'VUw', VUw);
+                        assignin('base', 'dUw', dUw);
+                        assignin('base', 'CUe', CUe);
+                        assignin('base', 'SUe', SUe);
+                        assignin('base', 'VUe', VUe);                     
+                        for i = 1:length(dU)
+                            assignin('base', 'dU', dU);
+                            assignin('base', 'dT', dT);
+                        end
+                        for i = 1:length(dUm1)
+                            assignin('base', 'dUm1', dUm1);
+                            assignin('base', 'dTm1', dTm1);
+                        end
+                        for i = 1:length(Div)
+                            assignin('base', 'Div', Div);
+                        end
+                        for i = 1:length(Div1)
+                            assignin('base', 'Div1', Div1);
+                        end
+                        for i = 1:length(C)
+                            assignin('base', 'C', C);
+                        end
+                        for i = 1:length(V)
+                            assignin('base', 'V', V);
+                        end
+                        for i = 1:length(S)
+                            assignin('base', 'S', S);
+                        end
                         
                         %Delete the wait bar - we're done
                         waitbar(1,hwait,'Finished')
