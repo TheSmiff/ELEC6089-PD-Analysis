@@ -329,26 +329,28 @@ end
       val = get(source,'Value');
       % Set current data to the selected data set.
       switch str{val};
-      case 'Delta U' % User selects Peaks.
+      case 'Delta U' % User selects dU.
+         %Scatter graph of dU
          scatter(dUm1, dU, '.');
          title('Pulse Sequence Analysis - \DeltaU Graph');
          xlabel('\DeltaU_{n-1} (V)');
          ylabel('\DeltaU_{n} (V)');
          axis([-2, 2, -2, 2]);
          grid on;
-      case 'Delta T' % User selects Membrane.
+      case 'Delta T' % User selects dT
          scatter(dTm1, dT, '.');
          title('Pulse Sequence Analysis - \DeltaT Graph');
          xlabel('\DeltaT_{n-1} (s)');
          ylabel('\DeltaT_{n} (s)');
          grid on;
-      case 'Delta U & Delta T' % User selects Sinc.
+      case 'Delta U & Delta T' % User selects dU and dT.
          scatter(Div1, Div, '.');
          title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
          xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
          ylabel('\DeltaU_{n}/\DeltaT_{n}');
          grid on;
-      case 'Voltage - Time' % User selects Peaks.
+      case 'Voltage - Time' % User selects whole online data.
+         %generate a sine wave to plot
          Wave = linspace(0,1, 5000);
          SinWave = (sind((rem(Wave,0.02)*360)/0.02));
          scatter(T, I, 'xm'); 
@@ -360,9 +362,11 @@ end
          xlabel('Time (s)');
          ylabel('Voltage (V)');
          grid on;
-      case 'Voltage - Time 1 cycle' % User selects Peaks.
+      case 'Voltage - Time 1 cycle' % User selects one cycle of online
+         %Generate sine wave
          Wave = linspace(0.02,0.04, 300);
          SinWave = sind((rem(Wave,0.02)*360)/0.02);
+         %Select data that comes in T>0.02 and T<0.04s for second sine wave
          clear tmp1 tmp2;
          tmp1 = T(T>0.02);
          tmp2 = I(T>0.02);
@@ -370,6 +374,7 @@ end
          tmp1 = tmp1(tmp1<0.04);        
          scatter(tmp1, tmp2, 'xm');
          hold on
+         %F is the filtered online data
          plot(transpose(linspace(0.02,0.04,length(F(10000:20000)))), F(10000:20000), '-b');
          plot(Wave, SinWave, '-r');
          hold off
@@ -379,7 +384,7 @@ end
          v = axis;
          grid on;
          hold off;
-     case 'Feature Comparison dU/dT' % User selects Peaks.
+     case 'Feature Comparison dU/dT' % User selects feature compaison
          if(~isequal(recflag,1))
                errordlg('Not available without running recognition','Program Error');
          else
@@ -396,7 +401,7 @@ end
          grid on;
          hold off;
          end
-       case 'Classification' % User selects Peaks.
+       case 'Classification' % User selects classification
          if(~isequal(recflag,1))
                errordlg('Not available without running recognition','Program Error');
          else
@@ -598,6 +603,7 @@ end
                         %From popup function so it auto updates when run
                         popup_menu_Callback(hpopup, 1);
                         
+                        %Process timing function and update gui
                         tElapsed = toc(tStart);
                         set(htime, 'String', ['Calculation Time: ', num2str(tElapsed, '%3.1f'), 's']);
                         
