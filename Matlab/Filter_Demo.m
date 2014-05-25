@@ -259,11 +259,11 @@ T_V2 = transpose(linspace(0, 1000, 524288));
 T_S2 = transpose(linspace(0, 1000, 524288));
 
 % --- Peak Selection
-[Corona1_Peak,locs] = findpeaks(Corona1_Filt, 'MINPEAKDISTANCE', 50, 'THRESHOLD', 0.05, 'MINPEAKHEIGHT', 0.05);
+[Corona1_Peak,locs] = findpeaks(Corona1_Filt, 'MINPEAKDISTANCE', 30, 'THRESHOLD', 0.01, 'MINPEAKHEIGHT', 0.05);
 T_C1 = T_C1(locs);
-[Void2_Peak,locs] = findpeaks(Void2_Filt, 'MINPEAKDISTANCE', 50, 'THRESHOLD', 0.05, 'MINPEAKHEIGHT', 0.05);
+[Void2_Peak,locs] = findpeaks(Void2_Filt, 'MINPEAKDISTANCE', 30, 'THRESHOLD', 0.01, 'MINPEAKHEIGHT', 0.05);
 T_V2 = T_V2(locs);
-[Surface2_Peak,locs] = findpeaks(Surface2_Filt, 'MINPEAKDISTANCE',50, 'THRESHOLD', 0.05, 'MINPEAKHEIGHT', 0.05);
+[Surface2_Peak,locs] = findpeaks(Surface2_Filt, 'MINPEAKDISTANCE',30, 'THRESHOLD', 0.01, 'MINPEAKHEIGHT', 0.05);
 T_S2 = T_S2(locs);
 
 % --- Sine Wave Gen

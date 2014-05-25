@@ -489,7 +489,7 @@ end
                         CUnet = configure(CUnet,CUmat);
                         %Set the training length (15 found to be about
                         %right from experimentation)
-                        CUnet.trainParam.epochs = 10;
+                        CUnet.trainParam.epochs = 7;
                         %Don't show the window - it spoils the professional
                         %feel
                         CUnet.trainParam.showWindow = false;
@@ -505,7 +505,7 @@ end
                         drawnow();
                         SUnet = competlayer(20,.1);
                         SUnet = configure(SUnet,SUmat);
-                        SUnet.trainParam.epochs = 10;
+                        SUnet.trainParam.epochs = 7;
                         SUnet.trainParam.showWindow = false;
                         SUnet = train(SUnet,SUmat);
                         SUw = SUnet.IW{1};
@@ -516,7 +516,7 @@ end
                         drawnow();
                         VUnet = competlayer(20,.1);
                         VUnet = configure(VUnet,VUmat);
-                        VUnet.trainParam.epochs = 10;
+                        VUnet.trainParam.epochs = 7;
                         VUnet.trainParam.showWindow = false;
                         VUnet = train(VUnet,VUmat);
                         VUw = VUnet.IW{1};
@@ -527,7 +527,7 @@ end
                         drawnow();
                         dUnet = competlayer(20,.1);
                         dUnet = configure(dUnet,dUmat);
-                        dUnet.trainParam.epochs = 10;
+                        dUnet.trainParam.epochs = 7;
                         dUnet.trainParam.showWindow = false;
                         dUnet = train(dUnet,dUmat);
                         dUw = dUnet.IW{1};
