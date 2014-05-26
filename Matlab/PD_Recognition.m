@@ -462,7 +462,7 @@ recflag = 0;
                         VUw = VUnet.IW{1};
                         
                         %%nn of the unknown data
-                        waitbar(0.70,hwait,'Surface Neural Network Feature Extraction')
+                        waitbar(0.70,hwait,'Unknown Neural Network Feature Extraction')
                         set(hrectext, 'String', 'Unknown Network 4/4');
                         drawnow();
                         dUnet = competlayer(20,.1);
