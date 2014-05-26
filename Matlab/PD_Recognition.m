@@ -1,3 +1,25 @@
+% -----------------------------------------------
+% --- PD_Recognition.m
+% --- Partial Discharge Recognition Tool
+% -----------------------------------------------
+% --- Authors: Thomas J. smith & David Mahmoodi
+% --- University of Southampton
+% --- School of Electronics and Computer Science
+% --- ELEC6089 High Voltage Insulation Systems
+% --- PD Coursework
+% -----------------------------------------------
+% --- Functional Description:
+% --- Performs a GUI driven Pulse Sequence Analysis
+% --- characterization of PD data into void, corona
+% --- and surface types. Uses neural networks to
+% --- compare an unkown data set with 3 reference types
+% --- and successfully automates characterization.
+% -----------------------------------------------
+% --- Requirements:
+% --- PSA.m & uoslogogrey.jpg must be located in same
+% --- root  file. All PD data stored in same directory.
+% -----------------------------------------------
+
 function PD_Analysis
 %Close all current figures
 close all;
@@ -8,6 +30,8 @@ fig1 = figure('Visible','off','Position',[100,100,660,485], 'name',...
     'NumberTitle', 'off', 'Resize', 'on', 'units','normalized');
 
 % ---  Construct the components.
+%GUI information for programatic GUIs found here
+%http://www.mathworks.co.uk/help/matlab/creating_guis/creating-and-running-a-programmatic-gui.html
 
 %Title decleration
 htitle = uicontrol('Style','text','String',...
@@ -126,14 +150,12 @@ set(hvoid, 'fontunits', 'normalized');
 set(hauthors, 'fontunits', 'normalized');
 set(htime, 'fontunits', 'normalized');
 
-
+%Context Menu handles for making popup function on right click
+%in graph mode - useful for copying figures into presentation
 cmenu = uicontextmenu('Parent',fig1,'Position',[10 215]);
 mh1 = uimenu(cmenu,'Label','Open in New Window',...
     'Accelerator','W',...
     'Callback',{@uimenu_window});
-mh2 = uimenu(cmenu,'Label','Save Figure',...
-    'Accelerator','S',...
-    'Callback',{@uimenu_save});
 mh3 = uimenu(cmenu,'Label','Reset View',...
     'Accelerator','R',...
     'Callback',{@uimenu_reset});
@@ -141,7 +163,7 @@ cmenuhandles = findall(fig1,'type','uicontextmenu');
 set(cmenuhandles,'HandleVisibility','off')
 menuitemhandles = findall(cmenuhandles,'type','uimenu');
 set(menuitemhandles,'HandleVisibility','off')
-set(ha,'UIContextMenu',cmenu); 
+set(ha,'UIContextMenu',cmenu);
 
 % Move the GUI to the center of the screen.
 movegui(fig1,'center')
@@ -149,11 +171,18 @@ movegui(fig1,'center')
 set(fig1,'Visible','on');
 
 % --- Define Global Variables
-FileName = 0;
-PathName = 0;
+%File Name Variables
+FileName = 0; %Unknown file name
+PathName = 0; %Unknown file path name
+FullPathName = 0; %Concat of filename + pathname
+CoronaName = get(hcor, 'String');
+CoronaPath = 0;
+SurfaceName = get(hsurf, 'String');
+SurfacePath = 0;
+VoidName = get(hvoid, 'String');
+VoidPath = 0;
+%PSA Storage Variables
 U = 0;
-Uf = 0;
-n = 0;
 dU = 0;
 dT = 0;
 dUm1(1) = 0;
@@ -161,13 +190,10 @@ dTm1(1) = 0;
 Div = 0;
 Div1 = 0;
 T = 0;
-FullPathName = 0;
-CoronaName = get(hcor, 'String');
-CoronaPath = 0;
-SurfaceName = get(hsurf, 'String');
-SurfacePath = 0;
-VoidName = get(hvoid, 'String');
-VoidPath = 0;
+%Online data variables
+I = 0;
+F = 0;
+%Variables for automted characterization
 CUw = 0;
 SUw = 0;
 VUw = 0;
@@ -175,39 +201,48 @@ dUw = 0;
 CUe = 0;
 VUe = 0;
 SUe = 0;
+%Other Program Flags
 Class = 0;
 recflag = 0;
-I = 0;
-F = 0;
+
 
 % --- Executes on button press in hopen.
     function openbtn_Callback(source,eventdata)
+        %Temp storage of previous variables in case open fails
         clear tmpf tmpp;
         tmpf = FileName;
         tmpp = PathName;
+        %Open the file
         [FileName,PathName] = uigetfile({'*.txt'},'Select the Partial Discharge Data file for analysis');
+        %If return 0, open has failed - reset to original
         if isequal(FileName,0)
             errordlg('No File Selected','File Error');
             FileName = tmpf;
             PathName = tmpp;
             set(hfile, 'String', tmpf);
         else
+            %Open file success - check and warn if it has been selected as
+            %a characterization reference file
             if (or(~isempty(strfind(CoronaName, FileName)),or(~isempty(strfind(SurfaceName, FileName)),~isempty(strfind(VoidName, FileName)))))
                 warndlg('File already selected for comparison','Selection Warning');
             end
+            %Populate the variables
             FullPathName = strcat(PathName, FileName);
             CoronaPath = PathName;
             SurfacePath = PathName;
             VoidPath = PathName;
+            %Update the GUI
             set(hfile, 'String', FileName)
+            %Check it is a .txt and warn if it is not
             if (isempty(strfind(FileName, '.txt')))
                 warndlg('File selected is not a supported data format','Format Warning');
             end%if
         end%ifelse
     end %function
 
-% --- Executes on button press in hopen.
+% --- Executes on button press in hopencor.
     function opencorbtn_Callback(source,eventdata)
+        %Essentially the same as openbtn_Callback
         clear tmpf tmpp;
         tmpf = CoronaName;
         tmpp = CoronaPath;
@@ -232,8 +267,9 @@ F = 0;
         end%ifelse
     end %function
 
-% --- Executes on button press in hopen.
+% --- Executes on button press in hopensurf
     function opensurfbtn_Callback(source,eventdata)
+        %Essentially the same as openbtn_Callback
         clear tmpf tmpp;
         tmpf = SurfaceName;
         tmpp = SurfacePath;
@@ -258,8 +294,9 @@ F = 0;
         end%ifelse
     end %function
 
-% --- Executes on button press in hopen.
+% --- Executes on button press in hopenvoid
     function openvoidbtn_Callback(source,eventdata)
+        %Essentially the same as openbtn_Callback
         clear tmpf tmpp;
         tmpf = VoidName;
         tmpp = VoidPath;
@@ -285,156 +322,47 @@ F = 0;
     end %function
 
 % --- Executes on button press in hrun
-function runbtn_Callback(source, eventdata)
-    if isequal(FileName,0)
-        errordlg('No File Selected - select a file for analysis','File Error');
-        set(hfile, 'String', 'Select a File to Proceed');
-    else
-        %Since it is not recognition
-        tStart = tic;
-        recflag = 0;
-        set(hrectext, 'String', '');
-        %Just normal PSA
-        [dU, dUm1, dT, dTm1, Div, Div1, T, U, I, F]= PSA(FullPathName);
-        %Dump variables to workspace - debug
-                for i = 1:length(dU)
-                    assignin('base', 'dU', dU);
-                    assignin('base', 'dT', dT);
-                end
-                for i = 1:length(dUm1)
-                    assignin('base', 'dUm1', dUm1);
-                    assignin('base', 'dTm1', dTm1);
-                end
-                for i = 1:length(Div)
-                    assignin('base', 'Div', Div);
-                end
-                for i = 1:length(U)
-                    assignin('base', 'U', U);
-                    assignin('base', 'T', T);
-                end
-        %From popup function so it auto updates when run
-        popup_menu_Callback(hpopup, 1);
-        tElapsed = toc(tStart);
-        set(htime, 'String', ['Calculation Time: ', num2str(tElapsed, '%3.1f'), 's']);
+% --- Runs just the PSA analysis - no automated characterization
+    function runbtn_Callback(source, eventdata)
+        %Check there is a valid file selected
+        if isequal(FileName,0)
+            errordlg('No File Selected - select a file for analysis','File Error');
+            set(hfile, 'String', 'Select a File to Proceed');
+        else
+            %Record the start time for diagnostics
+            tStart = tic;
+            %recflag is checked when plotting characterization graphs
+            %setting it to zero means that characterization hasn't been
+            %performed yet so those graphs are unavailable
+            recflag = 0;
+            %Clear the recognised class text if there was any beforehand
+            set(hrectext, 'String', '');
+            %Perform PSA - see PSA.m for funtion details
+            [dU, dUm1, dT, dTm1, Div, Div1, T, U, I, F]= PSA(FullPathName);
+            %Dump variables to workspace - debug
+            for i = 1:length(dU)
+                assignin('base', 'dU', dU);
+                assignin('base', 'dT', dT);
+            end
+            for i = 1:length(dUm1)
+                assignin('base', 'dUm1', dUm1);
+                assignin('base', 'dTm1', dTm1);
+            end
+            for i = 1:length(Div)
+                assignin('base', 'Div', Div);
+            end
+            for i = 1:length(U)
+                assignin('base', 'U', U);
+                assignin('base', 'T', T);
+            end
+            %From popup function so it auto updates when run
+            popup_menu_Callback(hpopup, 1);
+            %Update elapsed timings on the GUI
+            tElapsed = toc(tStart);
+            set(htime, 'String', ['Calculation Time: ', num2str(tElapsed, '%3.1f'), 's']);
+        end
     end
-end
 
-%  Pop-up menu callback. Read the pop-up menu Value property to
-%  determine which item is currently displayed and make it the
-%  current data. This callback automatically has access to 
-%  current_data because this function is nested at a lower level.
-   function popup_menu_Callback(source,eventdata) 
-      % Determine the selected data set.
-      str = get(source, 'String');
-      val = get(source,'Value');
-      % Set current data to the selected data set.
-      switch str{val};
-      case 'Delta U' % User selects dU.
-         %Scatter graph of dU
-         scatter(dUm1, dU, '.');
-         title('Pulse Sequence Analysis - \DeltaU Graph');
-         xlabel('\DeltaU_{n-1} (V)');
-         ylabel('\DeltaU_{n} (V)');
-         axis([-2, 2, -2, 2]);
-         grid on;
-      case 'Delta T' % User selects dT
-         scatter(dTm1, dT, '.');
-         title('Pulse Sequence Analysis - \DeltaT Graph');
-         xlabel('\DeltaT_{n-1} (s)');
-         ylabel('\DeltaT_{n} (s)');
-         grid on;
-      case 'Delta U & Delta T' % User selects dU and dT.
-         scatter(Div1, Div, '.');
-         title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
-         xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
-         ylabel('\DeltaU_{n}/\DeltaT_{n}');
-         grid on;
-      case 'Voltage - Time' % User selects whole online data.
-         %generate a sine wave to plot
-         Wave = linspace(0,1, 5000);
-         SinWave = (sind((rem(Wave,0.02)*360)/0.02));
-         scatter(T, I, 'xm'); 
-         hold on
-         plot(transpose(linspace(0,1,length(F))), F, '-b');
-         plot(Wave, SinWave, '-r');
-         hold off
-         title('Filtered Data - Voltage Time Graph');
-         xlabel('Time (s)');
-         ylabel('Voltage (V)');
-         grid on;
-      case 'Voltage - Time 1 cycle' % User selects one cycle of online
-         %Generate sine wave
-         Wave = linspace(0.02,0.04, 300);
-         SinWave = sind((rem(Wave,0.02)*360)/0.02);
-         %Select data that comes in T>0.02 and T<0.04s for second sine wave
-         clear tmp1 tmp2;
-         tmp1 = T(T>0.02);
-         tmp2 = I(T>0.02);
-         tmp2 = tmp2(tmp1<0.04);
-         tmp1 = tmp1(tmp1<0.04);        
-         scatter(tmp1, tmp2, 'xm');
-         hold on
-         %F is the filtered online data
-         plot(transpose(linspace(0.02,0.04,length(F(10000:20000)))), F(10000:20000), '-b');
-         plot(Wave, SinWave, '-r');
-         hold off
-         title('Filtered Data - Voltage Time Graph');
-         xlabel('Time (s)');
-         ylabel('Voltage (V)'); 
-         v = axis;
-         grid on;
-         hold off;
-     case 'Feature Comparison dU/dT' % User selects feature compaison
-         if(~isequal(recflag,1))
-               errordlg('Not available without running recognition','Program Error');
-         else
-         scatter(dUw(:,2),dUw(:,1), '.b');
-         hold on
-         scatter(CUw(:,2),CUw(:,1), '.r');
-         scatter(SUw(:,2),SUw(:,1), '.g');
-         scatter(VUw(:,2),VUw(:,1), '.m');
-         hold off
-         title('Features Extracted by Competitive Neural Network - dU/dT Graph');
-         xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
-         ylabel('\DeltaU_{n}/\DeltaT_{n}');
-         legend('\DeltaU plot Features', 'Corona Features', 'Surface Features', 'Void Features', 'Location', 'SouthEast');
-         grid on;
-         hold off;
-         end
-       case 'Classification' % User selects classification
-         if(~isequal(recflag,1))
-               errordlg('Not available without running recognition','Program Error');
-         else
-         if((CUe < SUe) && (CUe < VUe))
-             hb1 = bar(1, CUe, 'r');
-             hold on
-             hb2 = bar(2, SUe, 'b');
-             hb3 = bar(3, VUe, 'b');
-         end
-         if((SUe < CUe) && (SUe < VUe))
-             hb1 = bar(1, CUe, 'b');
-             hold on
-             hb2 = bar(2, SUe, 'r');
-             hb3 = bar(3, VUe, 'b'); 
-         end
-         if((VUe < CUe) && (VUe < SUe))
-             hb1 = bar(1, CUe, 'b');
-             hold on
-             hb2 = bar(2, SUe, 'b');
-             hb3 = bar(3, VUe, 'r');
-         end
-         set(ha, 'Xtick', 1:3, 'XTickLabel',{'Corona','Surface','Void'});
-         %set(hb1, 'XTickLabel','Corona');
-         %set(hb2, 'XTickLabel','Surface');
-         %set(hb3, 'XTickLabel','Void');
-         title('Sum euclidean distance between each feature set');
-         ylabel('Sum E Distance');
-         xlabel('Lowest bar indicates class');
-         hold off;
-         end
-      end
-   end
-            
 % --- Executes on button press in hrec
     function recbtn_Callback(source, eventdata)
         %Start Timer
@@ -461,13 +389,14 @@ end
                         %enable the use of the last two graphs
                         recflag = 1;
                         %Clear all variables
-                        clear dU dT dUm1 dTm1 Div Div1 T I If n U 
+                        clear dU dT dUm1 dTm1 Div Div1 T I If n U
                         clear C.dU C.dUm1 C.dT C.dTm1 C.Div C.Div1
                         clear V.dU V.dUm1 V.dT V.dTm1 V.Div V.Div1 S.dU
                         clear S.dUm1 S.dT S.dTm1 S.Div S.Div1
                         clear CdU SdU VdU CdT SdT SdV maxU dUpad dTpad Class
                         
                         %Perform PSA on the four selected samples
+                        %See PSA.m for PSA algorithm
                         [C.dU, C.dUm1, C.dT, C.dTm1, C.Div, C.Div1, ~, ~, ~, ~] = PSA(strcat(CoronaPath, CoronaName));
                         waitbar(0.03,hwait, 'Surface PSA')
                         [S.dU, S.dUm1, S.dT, S.dTm1, S.Div, S.Div1, ~, ~, ~, ~] = PSA(strcat(SurfacePath, SurfaceName));
@@ -478,21 +407,27 @@ end
                         
                         %Produce a 2xn matrix with the Div values in the
                         %top row and the Div1 values in the other.
+                        %dU/dT graph chosen for recognition since it is the
+                        %most characteristic graph with very well defined
+                        %differences between PD types
                         CUmat = [transpose(C.Div); transpose(C.Div1)];
                         SUmat = [transpose(S.Div); transpose(S.Div1)];
                         VUmat = [transpose(V.Div); transpose(V.Div1)];
                         dUmat = [transpose(Div); transpose(Div1)];
                         
-                        %Use a competitive neural network to extracto 20
+                        %Use a competitive neural network to extract 20
                         %clusters from the corona data
                         waitbar(0.10,hwait,'Corona Neural Network Feature Extraction')
                         set(hrectext, 'String', 'Corona Network 1/4');
+                        %Update GUI with progress
                         drawnow();
                         %Build a competitive layer network
+                        %See http://www.mathworks.co.uk/help/nnet/examples/competitive-learning.html
+                        %For more examples
                         CUnet = competlayer(20,.1);
                         %Feed in the matrix data
                         CUnet = configure(CUnet,CUmat);
-                        %Set the training length (15 found to be about
+                        %Set the training length (7 found to be about
                         %right from experimentation)
                         CUnet.trainParam.epochs = 7;
                         %Don't show the window - it spoils the professional
@@ -504,7 +439,7 @@ end
                         %the cluster positions.
                         CUw = CUnet.IW{1};
                         
-                        %nn analysis of the Surface data
+                        %nn analysis of the Surface data - same as above
                         waitbar(0.30,hwait,'Surface Neural Network Feature Extraction')
                         set(hrectext, 'String', 'Surface Network 2/4');
                         drawnow();
@@ -547,7 +482,7 @@ end
                         %For comparison
                         Sum = CUe+SUe+VUe;
                         
-                        %Set output string
+                        %Set output string accordingly
                         Class = '';
                         if((CUe < SUe) && (CUe < VUe))
                             Class = ['Corona: ', num2str(CUe, '%2.2f'), '/', num2str(Sum, '%2.1f')];
@@ -571,7 +506,7 @@ end
                         assignin('base', 'dUw', dUw);
                         assignin('base', 'CUe', CUe);
                         assignin('base', 'SUe', SUe);
-                        assignin('base', 'VUe', VUe);                     
+                        assignin('base', 'VUe', VUe);
                         for i = 1:length(dU)
                             assignin('base', 'dU', dU);
                             assignin('base', 'dT', dT);
@@ -613,21 +548,134 @@ end
         end
     end
 
-% --- Executes on button press in hopen.
+%  Pop-up menu callback. Read the pop-up menu Value property to
+%  determine which item is currently displayed and make it the
+%  current data. This callback automatically has access to
+%  current_data because this function is nested at a lower level.
+    function popup_menu_Callback(source,eventdata)
+        % Determine the selected data set.
+        str = get(source, 'String');
+        val = get(source,'Value');
+        % Set current data to the selected data set.
+        switch str{val};
+            case 'Delta U' % User selects dU.
+                %Scatter graph of dU
+                scatter(dUm1, dU, '.');
+                title('Pulse Sequence Analysis - \DeltaU Graph');
+                xlabel('\DeltaU_{n-1} (V)');
+                ylabel('\DeltaU_{n} (V)');
+                axis([-2, 2, -2, 2]);
+                grid on;
+            case 'Delta T' % User selects dT
+                scatter(dTm1, dT, '.');
+                title('Pulse Sequence Analysis - \DeltaT Graph');
+                xlabel('\DeltaT_{n-1} (s)');
+                ylabel('\DeltaT_{n} (s)');
+                grid on;
+            case 'Delta U & Delta T' % User selects dU and dT.
+                scatter(Div1, Div, '.');
+                title('Pulse Sequence Analysis - \DeltaU/\DeltaT Graph');
+                xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
+                ylabel('\DeltaU_{n}/\DeltaT_{n}');
+                grid on;
+            case 'Voltage - Time' % User selects whole online data.
+                %generate a sine wave to plot
+                Wave = linspace(0,1, 5000);
+                SinWave = (sind((rem(Wave,0.02)*360)/0.02));
+                scatter(T, I, 'xm');
+                hold on
+                plot(transpose(linspace(0,1,length(F))), F, '-b');
+                plot(Wave, SinWave, '-r');
+                hold off
+                title('Filtered Data - Voltage Time Graph');
+                xlabel('Time (s)');
+                ylabel('Voltage (V)');
+                grid on;
+            case 'Voltage - Time 1 cycle' % User selects one cycle of online
+                %Generate sine wave
+                Wave = linspace(0.02,0.04, 300);
+                SinWave = sind((rem(Wave,0.02)*360)/0.02);
+                %Select data that comes in T>0.02 and T<0.04s for second sine wave
+                clear tmp1 tmp2;
+                tmp1 = T(T>0.02);
+                tmp2 = I(T>0.02);
+                tmp2 = tmp2(tmp1<0.04);
+                tmp1 = tmp1(tmp1<0.04);
+                scatter(tmp1, tmp2, 'xm');
+                hold on
+                %F is the filtered online data
+                plot(transpose(linspace(0.02,0.04,length(F(10000:20000)))), F(10000:20000), '-b');
+                plot(Wave, SinWave, '-r');
+                hold off
+                title('Filtered Data - Voltage Time Graph');
+                xlabel('Time (s)');
+                ylabel('Voltage (V)');
+                v = axis;
+                grid on;
+                hold off;
+            case 'Feature Comparison dU/dT' % User selects feature comparison
+                %Plot scatter of features extracted from neural networks
+                if(~isequal(recflag,1))
+                    errordlg('Not available without running recognition','Program Error');
+                else
+                    scatter(dUw(:,2),dUw(:,1), '.b');
+                    hold on
+                    scatter(CUw(:,2),CUw(:,1), '.r');
+                    scatter(SUw(:,2),SUw(:,1), '.g');
+                    scatter(VUw(:,2),VUw(:,1), '.m');
+                    hold off
+                    title('Features Extracted by Competitive Neural Network - dU/dT Graph');
+                    xlabel('\DeltaU_{n-1}/\DeltaT_{n-1}');
+                    ylabel('\DeltaU_{n}/\DeltaT_{n}');
+                    legend('\DeltaU plot Features', 'Corona Features', 'Surface Features', 'Void Features', 'Location', 'SouthEast');
+                    grid on;
+                    hold off;
+                end
+            case 'Classification' % User selects classification
+                %Plot a bar graph of sum distances - shortest indicator
+                if(~isequal(recflag,1))
+                    errordlg('Not available without running recognition','Program Error');
+                else
+                    if((CUe < SUe) && (CUe < VUe))
+                        hb1 = bar(1, CUe, 'r');
+                        hold on
+                        hb2 = bar(2, SUe, 'b');
+                        hb3 = bar(3, VUe, 'b');
+                    end
+                    if((SUe < CUe) && (SUe < VUe))
+                        hb1 = bar(1, CUe, 'b');
+                        hold on
+                        hb2 = bar(2, SUe, 'r');
+                        hb3 = bar(3, VUe, 'b');
+                    end
+                    if((VUe < CUe) && (VUe < SUe))
+                        hb1 = bar(1, CUe, 'b');
+                        hold on
+                        hb2 = bar(2, SUe, 'b');
+                        hb3 = bar(3, VUe, 'r');
+                    end
+                    set(ha, 'Xtick', 1:3, 'XTickLabel',{'Corona','Surface','Void'});
+                    title('Sum euclidean distance between each feature set');
+                    ylabel('Sum E Distance');
+                    xlabel('Lowest bar indicates class');
+                    hold off;
+                end
+        end
+    end
+
+% --- Executes on button press in uimenu_reset
+% --- Resets graph if you mess it up - although I think matlab does this
+% anyway!
     function uimenu_reset(source,eventdata)
         if(isequal(recflag, 1))
             popup_menu_Callback(hpopup, 1);
         end
     end %function
 
-% --- Executes on button press in hopen.
-    function uimenu_save(source,eventdata)
-
-    end %function
-
-% --- Executes on button press in hopen.
+% --- Executes on button press in uimenu_window
+% --- Makes the current gui graph in a seperate window for saving
     function uimenu_window(source,eventdata)
-fig2 = figure('Visible','off','Position',[100,100,600,485], 'name',...
+        fig2 = figure('Visible','off','Position',[100,100,600,485], 'name',...
             'Partial Discharge Characterization Tool - T.Smith & D.Mahmoodi',...
             'NumberTitle', 'off', 'Resize', 'on', 'units','normalized');
         % Move the GUI to the center of the screen.
@@ -636,6 +684,7 @@ fig2 = figure('Visible','off','Position',[100,100,600,485], 'name',...
         set(fig2,'Visible','on');
         h2 = axes('Units','Pixels','Position',[65,50,500,390]);
         hold on
+        %Copy the current graph shown
         copyobj(get(ha,'children'),h2);
         grid on;
         xlabel(get(get(ha,'xlabel'),'string'));
@@ -643,10 +692,6 @@ fig2 = figure('Visible','off','Position',[100,100,600,485], 'name',...
         title(get(get(ha,'title'),'string'));
         set(h2, 'units','normalized');
         hold off
-        
     end %function
 
-    
-        
-
-end
+end %End Function
